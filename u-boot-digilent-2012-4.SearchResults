@@ -1,0 +1,4 @@
+---- eth_initialize Matches (3 in 3 files) ----
+Board.c (arch\arm\lib):	eth_initialize(gd->bd);
+Eth.c (net):int eth_initialize(bd_t *bis)
+Net.h (include):extern int eth_initialize(bd_t *bis);	/* Initialize network subsystem */
