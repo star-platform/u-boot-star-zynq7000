@@ -347,7 +347,7 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 	if (ret)
 		goto err_read_id;
 	
-	/* add by star */
+	/* add by star-star */
 	printf("QSPI idcode: 0x%x, 0x%x, 0x%x, 0x%x, 0x%x\n",
 			idcode[0], idcode[1], idcode[2], idcode[3], idcode[4]);
 	

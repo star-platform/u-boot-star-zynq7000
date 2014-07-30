@@ -33,7 +33,7 @@
 /* #define CONFIG_IPADDR   192.168.1.253
 #define CONFIG_SERVERIP 192.168.1.6
 */
-/* add by star */
+/* add by star-star */
 #define CONFIG_IPADDR   10.141.179.253
 #define CONFIG_SERVERIP 10.141.179.95
 /* #define CONFIG_BOOTARGS "console=ttyPS0,115200 root=/dev/mmcblk0p2 rw earlyprintk rootfstype=ext4 rootwait devtmpfs.mount=0" */
@@ -87,7 +87,7 @@
 #define CONFIG_CMDLINE_EDITING
 
 #undef CONFIG_SYS_PROMPT
-#define CONFIG_SYS_PROMPT	"star-uboot> "
+#define CONFIG_SYS_PROMPT	"asoc-uboot> "
 
 /* this is to initialize GEM at uboot start */
 /* #define CONFIG_ZYNQ_INIT_GEM	*/
@@ -95,7 +95,6 @@
 #define CONFIG_ZYNQ_IP_ENV
 
 /* HW to use */
-/* modify by star */
 /* #define CONFIG_UART1 */
 #define CONFIG_UART0
 

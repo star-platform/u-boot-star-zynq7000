@@ -310,9 +310,6 @@ int getc(void)
 	return serial_getc();
 }
 
-/* add by star */
-extern int test_bootdelay;
-
 
 int tstc(void)
 {
@@ -327,11 +324,7 @@ int tstc(void)
 
 	if (gd->flags & GD_FLG_DEVINIT) {
 		/* Test the standard input */
-		tstc_val = ftstc(stdin);
-		
-		/* add by star */
-		if (test_bootdelay)
-			printf("****** in tstc, will go to ftstc, ftstc val: %d\n", tstc_val);
+		tstc_val = ftstc(stdin);		
 		return tstc_val;
 	}
 	

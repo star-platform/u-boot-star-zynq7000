@@ -78,8 +78,6 @@ int board_init(void)
 	return 0;
 }
 
-#define STAR_TEST
-
 int board_late_init (void)
 {
 	u32 boot_mode;
@@ -99,12 +97,7 @@ int board_late_init (void)
 		setenv("modeboot", "run sdboot");
 		break;
 	case JTAG_MODE:
-/* modify by star */
-#ifdef STAR_TEST
-		setenv("modeboot", "run star_test");
-#else
 		setenv("modeboot", "run jtagboot");
-#endif
 		break;
 	default:
 		setenv("modeboot", "");

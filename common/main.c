@@ -58,10 +58,11 @@ int update_tftp (ulong addr);
 #endif /* CONFIG_UPDATE_TFTP */
 
 #define MAX_DELAY_STOP_STR 32
-
+/* add by star-star */
+/*
 #undef DEBUG_PARSER
-/* add by star */
-#define DEBUG_PARSER
+#define DEBUG_PARSER 
+*/
 
 
 
@@ -210,7 +211,7 @@ int abortboot(int bootdelay)
 static int menukey = 0;
 #endif
 
-/* add by star */
+/* add by star-star */
 int test_bootdelay = 0;
 
 
@@ -244,17 +245,10 @@ int abortboot(int bootdelay)
 
 	while ((bootdelay > 0) && (!abort)) {
 		int i;
-
-		/* add by star */
-		--bootdelay;	
-		if (bootdelay == 2)
-			test_bootdelay = 0;
 		
 		/* delay 100 * 10ms */
 		for (i=0; !abort && i<100; ++i) {
 			if (tstc()) {	/* we got a key press	*/
-				/* add by star */
-				printf("****** we got a key press\n");				
 				abort  = 1;	/* don't auto boot	*/
 				bootdelay = 0;	/* no more delay	*/
 # ifdef CONFIG_MENUKEY

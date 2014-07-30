@@ -20,9 +20,9 @@
 #include <net.h>
 #include "zynq_gem.h"
 
-/* add by star  */
+/* add by star-star  */
 #include <linux/mii.h>
-/* delete by star for Realtek RTL8211E */
+/* delete by star-star for Realtek RTL8211E */
 /* #define MARVELL_88E1116R */
 #define MII_MARVELL_PHY_PAGE			22
 #define MII_M1116R_CONTROL_REG_MAC		21
@@ -329,7 +329,7 @@ int Xgmac_init(struct eth_device *dev, bd_t * bis)
 		/*************************** PHY Setup ***************************/
 		/* ---------------------------------------------------------------------*/
 #ifndef MARVELL_88E1116R
-		/* add by star  */
+		/* add by star-star  */
 		/* --------------------------------------------- */
 		int phy_addr;
 		phy_addr = find_phy(EmacPssInstancePtr);
@@ -384,7 +384,7 @@ int Xgmac_init(struct eth_device *dev, bd_t * bis)
 	}
 	/* ---------------------------------------------------------------------*/
 #else
-	/* add by star MARVELL_88E1116R init should be as following */
+	/* add by star-star MARVELL_88E1116R init should be as following */
 	/* drivers/net/phy 88e1116r_config_init */
 	{
 		int temp;

@@ -258,9 +258,7 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		break;
 
 	case FPGA_LOADB:
-
-
-        /* add by star */
+        /* add by star-star */
         {
             u32 Status = 0;
         

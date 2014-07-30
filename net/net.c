@@ -231,7 +231,7 @@ static int net_check_prereq(enum proto_t protocol);
 
 static int NetTryCount;
 
-/* add by star for net debugging */
+/* add by star-star for net debugging */
 #define net_debug(fmt, args...)			\
 	debug_cond(0, fmt, ##args)
 

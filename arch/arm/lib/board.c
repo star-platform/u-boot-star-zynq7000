@@ -272,8 +272,7 @@ static int init_func_i2c(void)
 	puts("I2C:   ");
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	puts("ready\n");
-    puts("uboot not initialize hdmi\n");
-    #if 1
+    #if 0
 	som_hdmi_init();
     #endif
     

@@ -139,11 +139,11 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 	if (i == ARRAY_SIZE(winbond_spi_flash_table)) {
 		debug("SF: Unsupported Winbond ID %02x%02x\n",
 				idcode[1], idcode[2]);
-		/* add by star */
+		/* add by star-star */
 		printf("SF: Unsupported Winbond ID %02x%02x\n", idcode[1], idcode[2]);
 		return NULL;
 	}
-	/* add by star */
+	/* add by star-star */
 	printf("Winbond Flash found, id: 0x%x, name: %s\n", params->id, params->name);
 	
 	flash = malloc(sizeof(*flash));

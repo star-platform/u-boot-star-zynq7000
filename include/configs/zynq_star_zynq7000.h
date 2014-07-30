@@ -34,9 +34,9 @@
 #define CONFIG_SERVERIP 192.168.1.6
 */
 
-/* add by star */
-#define CONFIG_IPADDR   10.141.179.253
-#define CONFIG_SERVERIP 10.141.179.95
+/* add by star-star */
+#define CONFIG_IPADDR   192.168.1.9
+#define CONFIG_SERVERIP 192.168.1.2
 
 #define CONFIG_SYS_DCACHE_OFF   /*verify hdmi function*/
 #define CONFIG_SYS_ICACHE_OFF
@@ -111,7 +111,7 @@
 #define CONFIG_ZYNQ_IP_ENV
 
 /* HW to use */
-/* modify by star */
+/* modify by star-star */
 #define CONFIG_UART1
 /* #define CONFIG_UART0 */
 #define CONFIG_CMD_I2C
@@ -142,7 +142,7 @@
 #define CONFIG_SPI_FLASH
 #define CONFIG_CMD_SF
 
-/* modify by star, using winbond QSPI instead of spansion */
+/* modify by star-star, using winbond QSPI instead of spansion */
 /* #define CONFIG_SPI_FLASH_SPANSION */
 #define CONFIG_SPI_FLASH_WINBOND
 
