@@ -27,14 +27,14 @@
 #include <common.h>
 #include <asm/errno.h>
 
-#include "../zynq/xusbps_ch9.h"
-#include "../zynq/xusbps.h"
+#include "xusbps_ch9.h"
+#include "xusbps.h"
 
 
-#include "../zynq/xdevcfg_hw.h"
-#include "../zynq/xdevcfg.h"
-#include "../zynq/fsbl.h"
-#include "../zynq/xil_io.h"
+#include "xdevcfg_hw.h"
+#include "xdevcfg.h"
+#include "fsbl.h"
+#include "xil_io.h"
 
 #include "hdmi_header.h"
 #include <malloc.h>

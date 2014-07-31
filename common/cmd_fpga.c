@@ -33,9 +33,9 @@
 #include <fpga.h>
 #include <malloc.h>
 
-#include "../drivers/zynq/xdevcfg_hw.h"
-#include "../drivers/zynq/xdevcfg.h"
-#include "../drivers/zynq/fsbl.h"
+#include "xdevcfg_hw.h"
+#include "xdevcfg.h"
+#include "fsbl.h"
 /* Local functions */
 static int fpga_get_op (char *opstr);
 

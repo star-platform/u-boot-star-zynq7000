@@ -56,7 +56,7 @@
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
 #endif
-#include "../../../drivers/zynq/fsbl.h"
+#include "fsbl.h"
 
 #ifdef CONFIG_DRIVER_SMC91111
 #include "../drivers/net/smc91111.h"
