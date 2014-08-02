@@ -56,7 +56,9 @@
 #ifdef CONFIG_BITBANGMII
 #include <miiphy.h>
 #endif
+
 #include "fsbl.h"
+#include "xusbps.h"
 
 #ifdef CONFIG_DRIVER_SMC91111
 #include "../drivers/net/smc91111.h"
@@ -276,13 +278,6 @@ static int init_func_i2c(void)
 	som_hdmi_init();
     #endif
     
-    /* usb phy init */
-    usb_phy_init();
-    
-    #if 0
-	ulpi_phy_init();
-    #endif
-    
 	return (0);
 }
 #endif
@@ -360,8 +355,10 @@ init_fnc_t *init_sequence[] = {
 	init_func_i2c,
 #endif
 	dram_init,		/* configure available RAM banks */
+
 	NULL,
 };
+    
 
 void board_init_f(ulong bootflag)
 {
@@ -399,6 +396,7 @@ void board_init_f(ulong bootflag)
 			hang ();
 		}
 	}
+    /* som_hdmi_init(); */
 
 #ifdef CONFIG_OF_CONTROL
 	/* For now, put this check after the console is ready */
@@ -407,7 +405,7 @@ void board_init_f(ulong bootflag)
 			"doc/README.fdt-control");
 	}
 #endif
-
+    
 	debug("monitor len: %08lX\n", gd->mon_len);
 	/*
 	 * Ram is setup, size stored in gd !!
@@ -754,6 +752,14 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	}
 #endif
 
+    
+#if 1
+        /* add by star-star */
+        usb_phy_init();
+        
+        si9134_i2c_init();
+#endif
+    
 	/* main_loop() can return to retry autoboot, if so just run it again. */
 	for (;;) {
 		main_loop();

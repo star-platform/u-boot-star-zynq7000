@@ -71,57 +71,6 @@
 
 
 
-// I2C Config Struct
-typedef struct {
-	u8 Reg;
-	u8 Data;
-	u8 Init;
-} ZC702_I2C_CONFIG;
-
-#define ZC702_HDMI_ADDR1     0x39 // (Sil9134)
-#define ZC702_HDMI_ADDR2	 0x3d // (Sil9134)
-// HDMI 9134 1080P Separate Sync 422 422
-#define ZC702_HDMI_OUT_LEN1  3
-ZC702_I2C_CONFIG zc702_hdmi_out_config1[ZC702_HDMI_OUT_LEN1] =
-{
-
-		{0x05, 0x00, 0x01}, //
-		{0x05, 0x00, 0x00}, //
-		{0x08, 0x00, 0xfd} //
-
-};
-
-#define ZC702_HDMI_OUT_LEN2  11
-ZC702_I2C_CONFIG zc702_hdmi_out_config2[ZC702_HDMI_OUT_LEN2] =
-{
-		{0x2f, 0x00, 0x21},
-		{0x3e, 0x00, 0x03}, //
-		{0x40, 0x00, 0x82}, //
-		{0x41, 0x00, 0x02},
-		{0x42, 0x00, 0x0d},
-		{0x43, 0x00, 0xf7},//rgb in rgb out checksum
-		{0x44, 0x00, 0x10},//rgb
-		//	{0x44, 0x00, 0x20},	// yuv422
-		{0x45, 0x00, 0x68},
-		{0x46, 0x00, 0x00},
-		{0x47, 0x00, 0x00},
-		{0x3d, 0x00, 0x07}
-};
-
-
-
-
-static void iic_writex( u8 Address, ZC702_I2C_CONFIG Config[], u32 Length )
-{
-	int i;
-
-	for ( i = 0; i < Length; i++ )
-	{
-		//int i2c_write(u8 dev, uint addr, int alen, u8 *data, int length)
-		i2c_write(Address, Config[i].Reg, 0, &Config[i].Init, 1);
-	}
-}
-
 void ddr_video_wr() {
 
   u32 n;
@@ -144,42 +93,9 @@ void ddr_video_wr() {
 
 
 
-
-
-
 int som_hdmi_init( void )
 {
-
-	//int i2c_read(u8 dev, uint addr, int alen, u8 *data, int length)
-    u8 data[8];
-	int i=0;
-    i2c_read(ZC702_HDMI_ADDR1,0,0,data,8);  
-	for(i=0;i<8;i++)
-	{
-        printf("%x ",data[i]);
-	}
-	
-	printf("som initialize hdmi starting...\n\r");
-	// write Sii9134 configuration
-	iic_writex( ZC702_HDMI_ADDR1, zc702_hdmi_out_config1, ZC702_HDMI_OUT_LEN1 );
-
-	printf("i2c configure 0x39 done!\n\r");
-
-	iic_writex( ZC702_HDMI_ADDR2, zc702_hdmi_out_config2, ZC702_HDMI_OUT_LEN2 );
-
-	printf("som configure 0x3d done!\n\r");
-
-	memset(data,0,8);
-    i2c_read(ZC702_HDMI_ADDR1,0,0,data,8);  
-	for(i=0;i<8;i++)
-	{
-        printf("%x ",data[i]);
-	}
-/*
-	return 0;
-#else
-*/
-#if 1 
+    
     /*for logicvc,*/
     ddr_video_wr();
     
@@ -189,13 +105,11 @@ int som_hdmi_init( void )
 	  xil_printf("0x%x	",*(int *)(VIDEO_BASEADDR+4*i));
 	}
     printf("\n");
-    
+        
     printf("******before setting vdma, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x\n",
     	Xil_In32((VDMA_BASEADDR + 0x0)), Xil_In32((VDMA_BASEADDR + 0x5c)), Xil_In32((VDMA_BASEADDR + 0x60)),
         Xil_In32((VDMA_BASEADDR + 0x64)), Xil_In32((VDMA_BASEADDR + 0x58)), Xil_In32((VDMA_BASEADDR + 0x54)),
         Xil_In32((VDMA_BASEADDR + 0x50)));
-    
-    
 
 	//**********configure VDMA**************//
 	Xil_Out32((VDMA_BASEADDR + 0x000), 0x00000003); // enable circular mode
@@ -236,8 +150,6 @@ int som_hdmi_init( void )
     
 	printf("hdmi enable\n");
 
-    
-#endif
 }
 
 

@@ -27,14 +27,14 @@
 #include <common.h>
 #include <asm/errno.h>
 
-#include "../zynq/xusbps_ch9.h"
-#include "../zynq/xusbps.h"
+#include "xusbps_ch9.h"
+#include "xusbps.h"
 
 
-#include "../zynq/xdevcfg_hw.h"
-#include "../zynq/xdevcfg.h"
-#include "../zynq/fsbl.h"
-#include "../zynq/xil_io.h"
+#include "xdevcfg_hw.h"
+#include "xdevcfg.h"
+#include "fsbl.h"
+#include "xil_io.h"
 
 
 #include <malloc.h>
@@ -49,9 +49,9 @@ void usb_phy_init()
     
 	int	Status;
 	XUsbPs_Config		*UsbConfigPtr;
-    printf("usb_phy_init begin***\n");
+    /* printf("usb_phy_init begin***\n"); */
 	u8	*MemPtr = NULL;
-
+    
 	u32	MemSize;
     XUsbPs_DeviceConfig  DeviceConfig;
     u16 UsbDeviceId = XPAR_XUSBPS_0_DEVICE_ID;
@@ -73,15 +73,6 @@ void usb_phy_init()
 		return;
 	}
 
-    #if 0
-	Status = UsbSetupIntrSystem(IntcInstancePtr,
-				    UsbInstancePtr,
-				    UsbIntrId);
-	if (XST_SUCCESS != Status)
-	{
-		return
-	}
-    #endif
     
 	DeviceConfig.EpCfg[0].Out.Type		= XUSBPS_EP_TYPE_CONTROL;
 	DeviceConfig.EpCfg[0].Out.NumBufs	= 2;
@@ -101,13 +92,6 @@ void usb_phy_init()
 
 	DeviceConfig.NumEndpoints = NumEndpoints;
 	MemSize = XUsbPs_DeviceMemRequired(&DeviceConfig);
-    #if 0
-	UsbInstancePtr->UserDataPtr = malloc(sizeof(XUsbPs_Local));
-	if (NULL == UsbInstancePtr->UserDataPtr) {
-        printf("usb_phy_init step3***\n");
-		return;
-	}
-    #endif
 
 	MemPtr = &Buffer[0];
 	memset(&Buffer[0],0,65535);
@@ -130,7 +114,7 @@ void usb_phy_init()
 	/* Start the USB engine */
 	XUsbPs_Start(UsbInstancePtr);
     
-    printf("usb_phy_init end***\n");
+    /* printf("usb_phy_init end***\n"); */
     
     return;
 }

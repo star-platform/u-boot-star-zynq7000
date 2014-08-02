@@ -250,4 +250,8 @@ static inline void I2C_SET_BUS(unsigned int bus)
 		i2c_set_bus_num(bus);
 }
 
+/* add by star-star */
+int si9134_i2c_init(void);
+
+
 #endif	/* _I2C_H_ */

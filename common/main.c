@@ -245,6 +245,7 @@ int abortboot(int bootdelay)
 
 	while ((bootdelay > 0) && (!abort)) {
 		int i;
+		--bootdelay;	
 		
 		/* delay 100 * 10ms */
 		for (i=0; !abort && i<100; ++i) {

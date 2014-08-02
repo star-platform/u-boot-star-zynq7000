@@ -126,10 +126,62 @@ struct zynq_i2c_registers {
 
 #define ZYNQ_I2C_FIFO_DEPTH 16
 
-
-
 static struct zynq_i2c_registers *zynq_i2c =
 	(struct zynq_i2c_registers *) ZYNQ_I2C_BASE;
+
+
+
+// I2C Config Struct
+typedef struct {
+	u8 Reg;
+	u8 Data;
+	u8 Init;
+} ZC702_I2C_CONFIG;
+
+#define ZC702_HDMI_ADDR1     0x39 // (Sil9134)
+#define ZC702_HDMI_ADDR2	 0x3d // (Sil9134)
+// HDMI 9134 1080P Separate Sync 422 422
+#define ZC702_HDMI_OUT_LEN1  3
+ZC702_I2C_CONFIG zc702_hdmi_out_config1[ZC702_HDMI_OUT_LEN1] =
+{
+
+		{0x05, 0x00, 0x01}, //
+		{0x05, 0x00, 0x00}, //
+		{0x08, 0x00, 0xfd} //
+
+};
+
+#define ZC702_HDMI_OUT_LEN2  11
+ZC702_I2C_CONFIG zc702_hdmi_out_config2[ZC702_HDMI_OUT_LEN2] =
+{
+		{0x2f, 0x00, 0x21},
+		{0x3e, 0x00, 0x03}, //
+		{0x40, 0x00, 0x82}, //
+		{0x41, 0x00, 0x02},
+		{0x42, 0x00, 0x0d},
+		{0x43, 0x00, 0xf7},//rgb in rgb out checksum
+		{0x44, 0x00, 0x10},//rgb
+		//	{0x44, 0x00, 0x20},	// yuv422
+		{0x45, 0x00, 0x68},
+		{0x46, 0x00, 0x00},
+		{0x47, 0x00, 0x00},
+		{0x3d, 0x00, 0x07}
+};
+
+
+
+
+static void iic_writex( u8 Address, ZC702_I2C_CONFIG Config[], u32 Length )
+{
+	int i;
+
+	for ( i = 0; i < Length; i++ )
+	{
+		//int i2c_write(u8 dev, uint addr, int alen, u8 *data, int length)
+		i2c_write(Address, Config[i].Reg, 0, &Config[i].Init, 1);
+	}
+}
+
 
 /*
  * I2C init called by cmd_i2c when doing 'i2c reset'.
@@ -327,3 +379,42 @@ unsigned int i2c_get_bus_num(void)
 	/* Only support bus 0 */
 	return 0;
 }
+
+
+int si9134_i2c_init(void)
+{
+
+    u8 data[8];
+	int i=0;
+    i2c_read(ZC702_HDMI_ADDR1,0,0,data,8); 
+    #if 0
+	for(i = 0;i < 8;i++)
+	{
+        printf("%x ",data[i]);
+	}
+    printf("\n");
+	printf("som initialize hdmi starting...\n\r");
+    #endif
+	// write Sii9134 configuration
+	iic_writex( ZC702_HDMI_ADDR1, zc702_hdmi_out_config1, ZC702_HDMI_OUT_LEN1 );
+    
+    
+	iic_writex( ZC702_HDMI_ADDR2, zc702_hdmi_out_config2, ZC702_HDMI_OUT_LEN2 );
+
+	memset(data,0,8);
+    i2c_read(ZC702_HDMI_ADDR1,0,0,data,8);  
+    
+
+    #if 0
+	printf("i2c configure si9134 done!\n\r");
+            
+	for(i = 0;i < 8;i++)
+	{
+        printf("%x ",data[i]);
+	}
+    printf("\n");
+    #endif
+    
+    return 0;
+}
+
