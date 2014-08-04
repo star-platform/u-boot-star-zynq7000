@@ -30,6 +30,8 @@ COBJS-$(CONFIG_FPGA_XILINX) += pcap.o
 COBJS-$(CONFIG_FPGA_XILINX) += xdevcfg_sinit.o
 COBJS-$(CONFIG_FPGA_XILINX) += xdevcfg_g.o
 COBJS-$(CONFIG_FPGA_XILINX) += xdevcfg.o
+#COBJS-$(CONFIG_FPGA_XILINX) += xdevcfg_selftest_example.o
+#COBJS-$(CONFIG_FPGA_XILINX) += xdevcfg_selftest.o
 COBJS-$(CONFIG_FPGA_XILINX) += xil_printf.o
 COBJS-y += xil_io.o
 COBJS-$(CONFIG_FPGA_XILINX) += xdevcfg_intr.o
@@ -43,6 +45,46 @@ COBJS-y += xusbps_hw.o
 COBJS-y += xusbps_g.o
 COBJS-y += xusbps_endpoint.o
 COBJS-y += xusbps.o
+COBJS-y += xil_testmem.o
+COBJS-y += xscugic_tapp_example.o
+COBJS-y += xscugic_sinit.o
+COBJS-y += xscugic.o
+COBJS-y += xil_exception.o
+COBJS-y += xscugic_intr.o
+COBJS-y += xscugic_g.o
+#COBJS-y += xemacps_example_intr_dma.o
+#COBJS-y += xemacps_example_util.o
+#COBJS-y += xemacps.o
+#COBJS-y += xemacps_bdring.o
+#COBJS-y += xemacps_control.o
+#COBJS-y += xemacps_intr.o
+#COBJS-y += xemacps_sinit.o
+#COBJS-y += xemacps_g.o
+COBJS-y += xiicps_selftest_example.o
+COBJS-y += xiicps.o
+COBJS-y += xiicps_g.o
+COBJS-y += xiicps_hw.o
+COBJS-y += xiicps_intr.o
+COBJS-y += xiicps_sinit.o
+COBJS-y += xiicps_selftest.o
+COBJS-y += xiicps_options.o
+
+COBJS-y += xqspips_selftest_example.o
+
+COBJS-y += xqspips_sinit.o
+COBJS-y += xqspips.o
+COBJS-y += xqspips_g.o
+COBJS-y += xqspips_hw.o
+COBJS-y += xqspips_options.o
+COBJS-y += xqspips_selftest.o
+
+COBJS-y += xscutimer_polled_example.o
+
+COBJS-y += xscutimer_sinit.o
+COBJS-y += xscutimer.o
+COBJS-y += xscutimer_g.o
+COBJS-y += xscutimer_selftest.o
+
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

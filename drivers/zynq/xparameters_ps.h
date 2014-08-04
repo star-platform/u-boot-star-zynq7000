@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* (c) Copyright 2010-2012 Xilinx, Inc. All rights reserved.
+* (c) Copyright 2010-2013  Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -299,9 +299,6 @@ extern "C" {
 #define XPAR_PS7_SCUTIMER_0_INTR	XPS_SCU_TMR_INT_ID
 #define XPAR_PS7_XADC_0_INTR		XPS_SYSMON_INT_ID
 
-#define XPAR_XADCPS_NUM_INSTANCES 1
-#define XPAR_XADCPS_0_DEVICE_ID   0
-#define XPAR_XADCPS_0_BASEADDR	  (0xF8007000)
 #define XPAR_XADCPS_INT_ID		XPS_SYSMON_INT_ID
 
 /* For backwards compatibilty */
