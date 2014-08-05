@@ -66,14 +66,39 @@ enum {
     SCU_TIMER_POLL_TEST
 };
 
-char *opnum2op(int op_num)
+char *opnum2opstr(int op_num)
 {
     char tmp_op[100];
     switch (op_num)
     {
 	case MEMORY_TEST:
-		memcpy(tmp_op, "memory_test", 100);
+		strncpy(tmp_op, "DDR_test", 100);
 		break;
+        
+    case SCU_GIC_SELF_TEST:
+		strncpy(tmp_op, "Scu_GIC_self_test", 100);
+        break;
+        
+    case SCU_GIC_INT_SETUP:
+		strncpy(tmp_op, "Scu_GIC_INT_Setup", 100);
+        break;
+
+    case IIC0_PS_SELF_TEST:        
+		strncpy(tmp_op, "I2C0_self_test", 100);
+        break;
+
+    case IIC1_PS_SELF_TEST:
+		strncpy(tmp_op, "I2C1_self_test", 100);
+        break;
+
+    case QSPI_PS_SELF_TEST:       
+		strncpy(tmp_op, "QSPI_self_test", 100);
+        break;
+
+    case SCU_TIMER_POLL_TEST:        
+		strncpy(tmp_op, "Scu_Timer_Poll_test", 100);
+        break;
+                
 	default:
 		printf("invalid zynq verification operation\n");
 		break;
@@ -299,16 +324,16 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     {
 	case 2:		
 		op_num = simple_strtoul (argv[1], NULL, 16);
-        op_str = opnum2op(op_num);
-		printf("%s: op_num: 0x%x, operation:%s\n", op_str);
+        op_str = opnum2opstr(op_num);
+		printf("%s: op_num: 0x%x, operation:%s\n", __func__, op_num, op_str);
 		break;
-            
+        
 	default:
 		debug("%s: Too many or too few args (%d)\n",__func__, argc);
         op_num = -1;
 		break;
 	}
-          
+    
 	switch (op_num) 
     {
 	case MEMORY_TEST: 
@@ -343,19 +368,25 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 #endif
     
     default:
-        printf("invalid parameter, no zynq verification\n");
+        printf("invalid parameter, no zynq verification\n");        
+        printf("***************************************\n");   
+        printf("\r\n");
+		return cmd_usage(cmdtp);
 	}
     
 	return 0;
 }
 
-U_BOOT_CMD (zynq_verify, 6, 1, do_zynq_verify,
+U_BOOT_CMD (zynq_verify, 3, 1, do_zynq_verify,
 	"verify star-zynq7000 board function",
 	"[do_zynq_verify] [number]\n"
-	"zynq verify operations in detail:\n"
+	"zynq verify operations no:operation\n"
 	"  1\t DDR test\n"
-	"  2\t \n"
-	"  \n"
-	"  loadb\t[dev] [address] [size]\t"
-	"\tsubimage unit name in the form of addr:<subimg_uname>"
+	"  2\t Scu GIC self test\n"
+	"  3\t Scu GIC int setup\n"
+	"  4\t I2C0 test\n"
+	"  5\t I2C1 test\n"
+	"  6\t QSPI test\n"
+	"  7\t Scu Timer Poll test\n"
 );
+

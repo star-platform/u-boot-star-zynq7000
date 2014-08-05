@@ -203,7 +203,7 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     
 	switch (argc) 
     {
-	case 4:		/* fpga <op> <dev> <data addr> <datasize> */
+	case 4:		/* fpga <op><data addr> <datasize> */
 		data_size = simple_strtoul (argv[3], NULL, 16);
 		data_addr = (void *) simple_strtoul (argv[2], NULL, 16);
 		printf("%s: data_size: 0x%x, data_addr: 0x%x\n", __func__, data_size, data_addr);        

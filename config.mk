@@ -216,8 +216,7 @@ endif
 CPPFLAGS += -I$(TOPDIR)/include
 
 # add by star-star
-CPPFLAGS += -I$(TOPDIR)/drivers/zynq
-
+CPPFLAGS += -I$(TOPDIR)/zynq/include
 
 CPPFLAGS += -fno-builtin -ffreestanding -nostdinc	\
 	-isystem $(gccincdir) -pipe $(PLATFORM_CPPFLAGS)

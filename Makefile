@@ -303,12 +303,10 @@ LIBS += api/libapi.o
 LIBS += post/libpost.o
 
 
-# add by alex
-LIBS += benchmark/cholesky/cholesky.o
-LIBS += drivers/zynq/libzynq.o
+# add by star-star
 LIBS += drivers/usb/libusb_phy.o
 LIBS += drivers/hdmi/libhdmi.o
-
+LIBS += zynq/src/libzynq_veriry.o
 
 ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX),)
 LIBS += $(CPUDIR)/omap-common/libomap-common.o

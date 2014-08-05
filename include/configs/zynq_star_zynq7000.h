@@ -35,6 +35,10 @@
 */
 
 /* add by star-star */
+
+#define CONFIG_SYS_LONGHELP
+
+
 #define CONFIG_IPADDR   192.168.1.9
 #define CONFIG_SERVERIP 192.168.1.2
 
