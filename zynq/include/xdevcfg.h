@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* (c) Copyright 2011-12 Xilinx, Inc. All rights reserved.
+* (c) Copyright 2010-13 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -129,6 +129,21 @@
 *		     Updated the XDcfg_Transfer API to clear the
 *		     QUARTER_PCAP_RATE_EN bit in the control register for
 *		     non secure writes for CR 675543.
+* 2.02a nm  01/31/13 Fixed CR# 679335.
+* 		     Added Setting and Clearing the internal PCAP loopback.
+*		     Removed code for enabling/disabling AES engine as BootROM
+*		     locks down this setting.
+*		     Fixed CR# 681976.
+*		     Skip Checking the PCFG_INIT in case of non-secure DMA
+*		     loopback.
+*		     Fixed CR# 699558.
+*		     XDcfg_Transfer fails to transfer data in loopback mode.
+*		     Fixed CR# 701348.
+*                    Peripheral test fails with  Running
+* 		     DcfgSelfTestExample() in SECURE bootmode.
+* 2.03a nm  04/19/13 Fixed CR# 703728.
+*		     Updated the register definitions as per the latest TRM
+*		     version UG585 (v1.4) November 16, 2012.
 * </pre>
 *
 ******************************************************************************/

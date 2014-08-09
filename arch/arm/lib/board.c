@@ -274,9 +274,6 @@ static int init_func_i2c(void)
 	puts("I2C:   ");
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	puts("ready\n");
-    #if 0
-	som_hdmi_init();
-    #endif
     
 	return (0);
 }
@@ -396,8 +393,6 @@ void board_init_f(ulong bootflag)
 			hang ();
 		}
 	}
-    /* som_hdmi_init(); */
-
 #ifdef CONFIG_OF_CONTROL
 	/* For now, put this check after the console is ready */
 	if (fdtdec_prepare_fdt()) {

@@ -1,6 +1,6 @@
-/*******************************************************************************
+/******************************************************************************
 *
-* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
+* (c) Copyright 2009 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -36,29 +36,36 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
 *
-* @file xpseudo_asm.h
+* @file xil_hal.h
 *
-* This header file contains macros for using inline assembler code.
+* Contains all the HAL header files.
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
-* Ver   Who  Date     Changes
-* ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* Ver   Who  Date	 Changes
+* ----- ---- -------- -------------------------------------------------------
+* 1.00a hbm  07/28/09 Initial release
+*
 * </pre>
 *
+* @note
+*
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
+
+#ifndef XIL_HAL_H
+#define XIL_HAL_H
+
+#include "xil_cache.h"
+#include "xil_io.h"
+#include "xil_assert.h"
+#include "xil_exception.h"
+#include "xil_types.h"
+
 #endif
+

@@ -1,6 +1,6 @@
-/*******************************************************************************
+/******************************************************************************
 *
-* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
+* (c) Copyright 2009 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -36,29 +36,68 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
 *
-* @file xpseudo_asm.h
+* @file xil_cache_vxworks.h
 *
-* This header file contains macros for using inline assembler code.
+* Contains the cache related functions for VxWorks that is wrapped by
+* xil_cache. 
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
-* Ver   Who  Date     Changes
-* ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* Ver   Who  Date	 Changes
+* ----- ---- -------- -------------------------------------------------------
+* 1.00a hbm  12/11/09 Initial release
+*
 * </pre>
 *
+* @note
+*
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
+
+#ifndef XIL_CACHE_VXWORKS_H
+#define XIL_CACHE_VXWORKS_H
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#include "vxWorks.h"
+#include "vxLib.h"
+#include "sysLibExtra.h"
+#include "cacheLib.h"
+
+#if (CPU_FAMILY==PPC)
+
+#define Xil_DCacheEnable()		cacheEnable(DATA_CACHE)
+
+#define Xil_DCacheDisable()		cacheDisable(DATA_CACHE)
+
+#define Xil_DCacheInvalidateRange(Addr, Len) \
+		cacheInvalidate(DATA_CACHE, (void *)(Addr), (Len))
+
+#define Xil_DCacheFlushRange(Addr, Len) \
+		cacheFlush(DATA_CACHE, (void *)(Addr), (Len))
+
+#define Xil_ICacheEnable()		cacheEnable(INSTRUCTION_CACHE)
+
+#define Xil_ICacheDisable()		cacheDisable(INSTRUCTION_CACHE)
+
+#define Xil_ICacheInvalidateRange(Addr, Len) \
+		cacheInvalidate(INSTRUCTION_CACHE, (void *)(Addr), (Len))
+
+
+#else
+#error "Unknown processor / architecture. Must be PPC for VxWorks."
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+

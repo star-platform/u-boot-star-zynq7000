@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* (c) Copyright 2011-12 Xilinx, Inc. All rights reserved.
+* (c) Copyright 2010-13 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -54,6 +54,10 @@
 * 2.01a nm  08/01/12 Added defines for the PS Version bits,
 *	             removed the FIFO Flush bits from the
 *		     Miscellaneous Control Reg
+* 2.03a nm  04/19/13 Fixed CR# 703728.
+*		     Updated the register definitions as per the latest TRM
+*		     version UG585 (v1.4) November 16, 2012.
+* 2.04a	kpc	10/07/13 Added function prototype.	
 * </pre>
 *
 ******************************************************************************/
@@ -104,6 +108,7 @@ extern "C" {
 #define XDCFG_CTRL_PCFG_PROG_B_MASK	0x40000000 /**< Program signal to
 						     *  Reset FPGA
 						     */
+#define XDCFG_CTRL_PCFG_POR_CNT_4K_MASK	0x20000000 /**< Control PL POR timer */
 #define XDCFG_CTRL_PCAP_PR_MASK	  	0x08000000 /**< Enable PCAP for PR */
 #define XDCFG_CTRL_PCAP_MODE_MASK	0x04000000 /**< Enable PCAP */
 #define XDCFG_CTRL_PCAP_RATE_EN_MASK	0x02000000 /**< Enable PCAP send data
@@ -113,6 +118,7 @@ extern "C" {
 #define XDCFG_CTRL_MULTIBOOT_EN_MASK	0x01000000 /**< Multiboot Enable */
 #define XDCFG_CTRL_JTAG_CHAIN_DIS_MASK	0x00800000 /**< JTAG Chain Disable */
 #define XDCFG_CTRL_USER_MODE_MASK	0x00008000 /**< User Mode Mask */
+#define XDCFG_CTRL_PCFG_AES_FUSE_MASK	0x00001000 /**< AES key source */
 #define XDCFG_CTRL_PCFG_AES_EN_MASK	0x00000E00 /**< AES Enable Mask */
 #define XDCFG_CTRL_SEU_EN_MASK		0x00000100 /**< SEU Enable Mask */
 #define XDCFG_CTRL_SEC_EN_MASK		0x00000080 /**< Secure/Non Secure
@@ -138,6 +144,7 @@ extern "C" {
   * @{
  */
 
+#define XDCFG_LOCK_AES_EFUSE_MASK	0x00000010 /**< Lock AES Efuse bit */
 #define XDCFG_LOCK_AES_EN_MASK		0x00000008 /**< Lock AES_EN update */
 #define XDCFG_LOCK_SEU_MASK		0x00000004 /**< Lock SEU_En update */
 #define XDCFG_LOCK_SEC_MASK		0x00000002 /**< Lock SEC_EN and
@@ -175,24 +182,25 @@ extern "C" {
 						     *  address increment
 						     *  mask
 						     */
-#define XDCFG_CFG_RD_ISSU_MASK		0x00000008 /**< AXI read issuing
-						     *  capability
-						     */
-#define XDCFG_CFG_WR_ISSU_MASK		0x00000004 /**< AXI write issuing
-						     *  capability
-						     */
-#define XDCFG_CFG_RDLEN_MASK	  	0x00000002 /**< AXI Read burst
-						     *  length  Mask
-						     */
-#define XDCFG_CFG_WRLEN_MASK	  	0x00000001 /**< AXI write burst
-						     *  length  Mask
-						     */
 /* @} */
 
 
 /** @name Interrupt Status/Mask Register Bit definitions
   * @{
  */
+#define XDCFG_IXR_PSS_GTS_USR_B_MASK	0x80000000 /**< Tri-state IO during
+						     *  HIZ
+						     */
+#define XDCFG_IXR_PSS_FST_CFG_B_MASK	0x40000000 /**< First configuration
+						     *  done
+						     */
+#define XDCFG_IXR_PSS_GPWRDWN_B_MASK	0x20000000 /**< Global power down */
+#define XDCFG_IXR_PSS_GTS_CFG_B_MASK	0x10000000 /**< Tri-state IO during
+						     *  configuration
+						     */
+#define XDCFG_IXR_PSS_CFG_RESET_B_MASK	0x08000000 /**< PL configuration
+						     *  reset
+						     */
 #define XDCFG_IXR_AXI_WTO_MASK		0x00800000 /**< AXI Write Address
 						     *  or Data or response
 						     *  timeout
@@ -266,17 +274,32 @@ extern "C" {
 						     */
 #define XDCFG_STATUS_RX_FIFO_LVL_MASK	0x01F000000 /**< Rx FIFO level */
 #define XDCFG_STATUS_TX_FIFO_LVL_MASK	0x0007F000  /**< Tx FIFO level */
+
+#define XDCFG_STATUS_PSS_GTS_USR_B	0x00000800  /**< Tri-state IO
+						      *  during HIZ
+						      */
+#define XDCFG_STATUS_PSS_FST_CFG_B	0x00000400  /**< First PL config
+						      *  done
+						      */
+#define XDCFG_STATUS_PSS_GPWRDWN_B	0x00000200  /**< Global power down */
+#define XDCFG_STATUS_PSS_GTS_CFG_B	0x00000100  /**< Tri-state IO during
+						      *  config
+						      */
 #define XDCFG_STATUS_SECURE_RST_MASK	0x00000080  /**< Secure Reset
 						      *  POR Status
 						      */
 #define XDCFG_STATUS_ILLEGAL_APB_ACCESS_MASK 	0x00000040 /**< Illegal APB
 							     *  access
 						  	     */
+#define XDCFG_STATUS_PSS_CFG_RESET_B		0x00000020 /**< PL config
+							     *  reset status
+							     */
 #define XDCFG_STATUS_PCFG_INIT_MASK		0x00000010 /**< FPGA Init
 							     *  Status
 							     */
-#define XDCFG_STATUS_EFUSE_SW_RESERVE_MASK	0x00000008 /**< Efuse Reserved
-							     *  Status
+#define XDCFG_STATUS_EFUSE_BBRAM_KEY_DISABLE_MASK	0x00000008
+							   /**< BBRAM key
+							     *  disable
 							     */
 #define XDCFG_STATUS_EFUSE_SEC_EN_MASK		0x00000004 /**< Efuse Security
 						     	     *  Enable Status
@@ -284,9 +307,6 @@ extern "C" {
 #define XDCFG_STATUS_EFUSE_JTAG_DIS_MASK	0x00000002 /**< EFuse JTAG
 							     *  Disable
 							     *  status
-							     */
-#define XDCFG_STATUS_SECURE_DIS_MASK		0x00000001 /**< Security
-							     *  Disable Status
 							     */
 /* @} */
 
@@ -325,6 +345,7 @@ extern "C" {
 #define XDCFG_BASE_ADDRESS		0xFE007000  /**< Device Config base
 						      * address
 						      */
+#define XDCFG_CONFIG_RESET_VALUE	0x508	/**< Config reg reset value */							  
 
 /**************************** Type Definitions *******************************/
 
@@ -366,7 +387,10 @@ extern "C" {
 	Xil_Out32((BaseAddr) + (RegOffset), (Data))
 
 /************************** Function Prototypes ******************************/
-
+/*
+ * Perform reset operation to the devcfg interface
+ */
+void XDcfg_ResetHw(u32 BaseAddr);
 /************************** Variable Definitions *****************************/
 
 #ifdef __cplusplus

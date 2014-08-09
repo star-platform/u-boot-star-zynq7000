@@ -20,6 +20,26 @@
 /******************************************************************/
 
 
+/* Definitions for peripheral AUDIO_I2S_0 */
+#define XPAR_AUDIO_I2S_0_BASEADDR 0x7AA00000
+#define XPAR_AUDIO_I2S_0_HIGHADDR 0x7AA0FFFF
+
+
+/* Definitions for peripheral AXI_CLKGEN_0 */
+#define XPAR_AXI_CLKGEN_0_BASEADDR 0x79000000
+#define XPAR_AXI_CLKGEN_0_HIGHADDR 0x7900FFFF
+
+
+/* Definitions for peripheral AXI_HDMI_TX_24B_0 */
+#define XPAR_AXI_HDMI_TX_24B_0_BASEADDR 0x70E00000
+#define XPAR_AXI_HDMI_TX_24B_0_HIGHADDR 0x70E0FFFF
+
+
+/* Definitions for peripheral AXI_VGA_0 */
+#define XPAR_AXI_VGA_0_BASEADDR 0x7DE20000
+#define XPAR_AXI_VGA_0_HIGHADDR 0x7DE2FFFF
+
+
 /* Definitions for peripheral PS7_AFI_0 */
 #define XPAR_PS7_AFI_0_S_AXI_BASEADDR 0xF8008000
 #define XPAR_PS7_AFI_0_S_AXI_HIGHADDR 0xF8008FFF
@@ -48,6 +68,14 @@
 /* Definitions for peripheral PS7_DDR_0 */
 #define XPAR_PS7_DDR_0_S_AXI_BASEADDR 0x00100000
 #define XPAR_PS7_DDR_0_S_AXI_HIGHADDR 0x3FFFFFFF
+#define XPAR_PS7_DDR_0_S_AXI_HP0_BASEADDR 0x00000000
+#define XPAR_PS7_DDR_0_S_AXI_HP0_HIGHADDR 0x3FFFFFFF
+#define XPAR_PS7_DDR_0_S_AXI_HP1_BASEADDR 0x00000000
+#define XPAR_PS7_DDR_0_S_AXI_HP1_HIGHADDR 0x3FFFFFFF
+#define XPAR_PS7_DDR_0_S_AXI_HP2_BASEADDR 0x00000000
+#define XPAR_PS7_DDR_0_S_AXI_HP2_HIGHADDR 0x3FFFFFFF
+#define XPAR_PS7_DDR_0_S_AXI_HP3_BASEADDR 0x00000000
+#define XPAR_PS7_DDR_0_S_AXI_HP3_HIGHADDR 0x3FFFFFFF
 
 
 /* Definitions for peripheral PS7_DDRC_0 */
@@ -129,6 +157,165 @@
 /* Definitions for peripheral PS7_SLCR_0 */
 #define XPAR_PS7_SLCR_0_S_AXI_BASEADDR 0xF8000000
 #define XPAR_PS7_SLCR_0_S_AXI_HIGHADDR 0xF8000FFF
+
+
+/******************************************************************/
+
+/* Definitions for driver IIC */
+#define XPAR_XIIC_NUM_INSTANCES 1
+
+/* Definitions for peripheral AXI_IIC_0 */
+#define XPAR_AXI_IIC_0_DEVICE_ID 0
+#define XPAR_AXI_IIC_0_BASEADDR 0x41600000
+#define XPAR_AXI_IIC_0_HIGHADDR 0x4160FFFF
+#define XPAR_AXI_IIC_0_TEN_BIT_ADR 0
+#define XPAR_AXI_IIC_0_GPO_WIDTH 1
+
+
+/******************************************************************/
+
+/* Canonical definitions for peripheral AXI_IIC_0 */
+#define XPAR_IIC_0_DEVICE_ID XPAR_AXI_IIC_0_DEVICE_ID
+#define XPAR_IIC_0_BASEADDR 0x41600000
+#define XPAR_IIC_0_HIGHADDR 0x4160FFFF
+#define XPAR_IIC_0_TEN_BIT_ADR 0
+#define XPAR_IIC_0_GPO_WIDTH 1
+
+
+/******************************************************************/
+
+/* Definitions for driver AXIVDMA */
+#define XPAR_XAXIVDMA_NUM_INSTANCES 1
+
+/* Definitions for peripheral AXI_VDMA_0 */
+#define XPAR_AXI_VDMA_0_DEVICE_ID 0
+#define XPAR_AXI_VDMA_0_BASEADDR 0x43000000
+#define XPAR_AXI_VDMA_0_HIGHADDR 0x4300FFFF
+#define XPAR_AXI_VDMA_0_NUM_FSTORES 3
+#define XPAR_AXI_VDMA_0_INCLUDE_MM2S 1
+#define XPAR_AXI_VDMA_0_INCLUDE_MM2S_DRE 0
+#define XPAR_AXI_VDMA_0_M_AXI_MM2S_DATA_WIDTH 64
+#define XPAR_AXI_VDMA_0_INCLUDE_S2MM 0
+#define XPAR_AXI_VDMA_0_INCLUDE_S2MM_DRE 0
+#define XPAR_AXI_VDMA_0_M_AXI_S2MM_DATA_WIDTH 32
+#define XPAR_AXI_VDMA_0_AXI_MM2S_ACLK_FREQ_HZ 0
+#define XPAR_AXI_VDMA_0_AXI_S2MM_ACLK_FREQ_HZ 0
+#define XPAR_AXI_VDMA_0_MM2S_GENLOCK_MODE 1
+#define XPAR_AXI_VDMA_0_MM2S_GENLOCK_NUM_MASTERS 1
+#define XPAR_AXI_VDMA_0_S2MM_GENLOCK_MODE 0
+#define XPAR_AXI_VDMA_0_S2MM_GENLOCK_NUM_MASTERS 1
+#define XPAR_AXI_VDMA_0_INCLUDE_SG 0
+#define XPAR_AXI_VDMA_0_ENABLE_VIDPRMTR_READS 1
+#define XPAR_AXI_VDMA_0_USE_FSYNC 1
+#define XPAR_AXI_VDMA_0_FLUSH_ON_FSYNC 1
+#define XPAR_AXI_VDMA_0_MM2S_LINEBUFFER_DEPTH 128
+#define XPAR_AXI_VDMA_0_S2MM_LINEBUFFER_DEPTH 128
+#define XPAR_AXI_VDMA_0_INCLUDE_INTERNAL_GENLOCK 1
+#define XPAR_AXI_VDMA_0_S2MM_SOF_ENABLE 1
+#define XPAR_AXI_VDMA_0_M_AXIS_MM2S_TDATA_WIDTH 64
+#define XPAR_AXI_VDMA_0_S_AXIS_S2MM_TDATA_WIDTH 32
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_1 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_5 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_6 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_7 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_9 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_13 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_14 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_INFO_15 1
+#define XPAR_AXI_VDMA_0_ENABLE_DEBUG_ALL 1
+
+
+/******************************************************************/
+
+/* Canonical definitions for peripheral AXI_VDMA_0 */
+#define XPAR_AXIVDMA_0_DEVICE_ID XPAR_AXI_VDMA_0_DEVICE_ID
+#define XPAR_AXIVDMA_0_BASEADDR 0x43000000
+#define XPAR_AXIVDMA_0_HIGHADDR 0x4300FFFF
+#define XPAR_AXIVDMA_0_NUM_FSTORES 3
+#define XPAR_AXIVDMA_0_INCLUDE_MM2S 1
+#define XPAR_AXIVDMA_0_INCLUDE_MM2S_DRE 0
+#define XPAR_AXIVDMA_0_M_AXI_MM2S_DATA_WIDTH 64
+#define XPAR_AXIVDMA_0_INCLUDE_S2MM 0
+#define XPAR_AXIVDMA_0_INCLUDE_S2MM_DRE 0
+#define XPAR_AXIVDMA_0_M_AXI_S2MM_DATA_WIDTH 32
+#define XPAR_AXIVDMA_0_AXI_MM2S_ACLK_FREQ_HZ 0
+#define XPAR_AXIVDMA_0_AXI_S2MM_ACLK_FREQ_HZ 0
+#define XPAR_AXIVDMA_0_MM2S_GENLOCK_MODE 1
+#define XPAR_AXIVDMA_0_MM2S_GENLOCK_NUM_MASTERS 1
+#define XPAR_AXIVDMA_0_S2MM_GENLOCK_MODE 0
+#define XPAR_AXIVDMA_0_S2MM_GENLOCK_NUM_MASTERS 1
+#define XPAR_AXIVDMA_0_INCLUDE_SG 0
+#define XPAR_AXIVDMA_0_ENABLE_VIDPRMTR_READS 1
+#define XPAR_AXIVDMA_0_USE_FSYNC 1
+#define XPAR_AXIVDMA_0_FLUSH_ON_FSYNC 1
+#define XPAR_AXIVDMA_0_MM2S_LINEBUFFER_DEPTH 128
+#define XPAR_AXIVDMA_0_S2MM_LINEBUFFER_DEPTH 128
+#define XPAR_AXIVDMA_0_INCLUDE_INTERNAL_GENLOCK 1
+#define XPAR_AXIVDMA_0_S2MM_SOF_ENABLE 1
+#define XPAR_AXIVDMA_0_M_AXIS_MM2S_TDATA_WIDTH 64
+#define XPAR_AXIVDMA_0_S_AXIS_S2MM_TDATA_WIDTH 32
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_1 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_5 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_6 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_7 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_9 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_13 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_14 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_INFO_15 1
+#define XPAR_AXIVDMA_0_ENABLE_DEBUG_ALL 1
+
+
+/******************************************************************/
+
+/* Definitions for driver GPIO */
+#define XPAR_XGPIO_NUM_INSTANCES 3
+
+/* Definitions for peripheral KEY_IO */
+#define XPAR_KEY_IO_BASEADDR 0x41240000
+#define XPAR_KEY_IO_HIGHADDR 0x4124FFFF
+#define XPAR_KEY_IO_DEVICE_ID 0
+#define XPAR_KEY_IO_INTERRUPT_PRESENT 0
+#define XPAR_KEY_IO_IS_DUAL 0
+
+
+/* Definitions for peripheral LED_IO */
+#define XPAR_LED_IO_BASEADDR 0x41280000
+#define XPAR_LED_IO_HIGHADDR 0x4128FFFF
+#define XPAR_LED_IO_DEVICE_ID 1
+#define XPAR_LED_IO_INTERRUPT_PRESENT 0
+#define XPAR_LED_IO_IS_DUAL 0
+
+
+/* Definitions for peripheral OLED_IO */
+#define XPAR_OLED_IO_BASEADDR 0x41200000
+#define XPAR_OLED_IO_HIGHADDR 0x4120FFFF
+#define XPAR_OLED_IO_DEVICE_ID 2
+#define XPAR_OLED_IO_INTERRUPT_PRESENT 0
+#define XPAR_OLED_IO_IS_DUAL 0
+
+
+/******************************************************************/
+
+/* Canonical definitions for peripheral KEY_IO */
+#define XPAR_GPIO_0_BASEADDR 0x41240000
+#define XPAR_GPIO_0_HIGHADDR 0x4124FFFF
+#define XPAR_GPIO_0_DEVICE_ID XPAR_KEY_IO_DEVICE_ID
+#define XPAR_GPIO_0_INTERRUPT_PRESENT 0
+#define XPAR_GPIO_0_IS_DUAL 0
+
+/* Canonical definitions for peripheral LED_IO */
+#define XPAR_GPIO_1_BASEADDR 0x41280000
+#define XPAR_GPIO_1_HIGHADDR 0x4128FFFF
+#define XPAR_GPIO_1_DEVICE_ID XPAR_LED_IO_DEVICE_ID
+#define XPAR_GPIO_1_INTERRUPT_PRESENT 0
+#define XPAR_GPIO_1_IS_DUAL 0
+
+/* Canonical definitions for peripheral OLED_IO */
+#define XPAR_GPIO_2_BASEADDR 0x41200000
+#define XPAR_GPIO_2_HIGHADDR 0x4120FFFF
+#define XPAR_GPIO_2_DEVICE_ID XPAR_OLED_IO_DEVICE_ID
+#define XPAR_GPIO_2_INTERRUPT_PRESENT 0
+#define XPAR_GPIO_2_IS_DUAL 0
 
 
 /******************************************************************/
@@ -292,10 +479,12 @@
 /******************************************************************/
 
 /* Definitions for Fabric interrupts connected to ps7_scugic_0 */
+#define XPAR_FABRIC_AXI_VDMA_0_MM2S_INTROUT_INTR 91
 
 /******************************************************************/
 
 /* Canonical definitions for Fabric interrupts connected to ps7_scugic_0 */
+#define XPAR_FABRIC_AXIVDMA_0_VEC_ID XPAR_FABRIC_AXI_VDMA_0_MM2S_INTROUT_INTR
 
 /******************************************************************/
 
@@ -423,13 +612,13 @@
 #define XPAR_CPU_ID 0
 
 /* Definitions for peripheral PS7_CORTEXA9_0 */
-#define XPAR_PS7_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
+#define XPAR_PS7_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666688
 
 
 /******************************************************************/
 
 /* Canonical definitions for peripheral PS7_CORTEXA9_0 */
-#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
+#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666688
 
 
 /******************************************************************/

@@ -1084,17 +1084,8 @@ int XUsbPs_IntrSetHandler(XUsbPs *InstancePtr,
  */
 XUsbPs_Config *XUsbPs_LookupConfig(u16 DeviceId);
 
-
-/* add by star-star */
-void usb_phy_init();
-
-
-
 #ifdef __cplusplus
 }
 #endif
-
-
-
 
 #endif /* XUSBPS_H */

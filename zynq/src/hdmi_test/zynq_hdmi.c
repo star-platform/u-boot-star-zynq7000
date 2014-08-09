@@ -38,16 +38,21 @@
 
 #include "hdmi_header.h"
 #include <malloc.h>
+#include "xiicps.h"
+
+#define IIC_DEVICE_ID	XPAR_XIICPS_1_DEVICE_ID
+#define INTC_DEVICE_ID	XPAR_SCUGIC_SINGLE_DEVICE_ID
+#define IIC_INTR_ID	    XPAR_XIICPS_1_INTR
+#define IIC_SCLK_RATE		100000
 
 
-/* Definitions for peripheral AXI_HDMI_TX_24B_0 */
-#define XPAR_AXI_HDMI_TX_24B_0_BASEADDR 0x70E00000
+#define CF_CLKGEN_BASEADDR  XPAR_AXI_CLKGEN_0_BASEADDR
 #define CFV_BASEADDR        XPAR_AXI_HDMI_TX_24B_0_BASEADDR
-#define VDMA_BASEADDR       0x43000000
-
+#define CFA_BASEADDR        0x75c00000
 #define DDR_BASEADDR        0x00000000
-#define VIDEO_BASEADDR DDR_BASEADDR + 0x2000000
-
+#define UART_BASEADDR       0xe0001000
+#define VDMA_BASEADDR       0x43000000
+#define ADMA_BASEADDR       0x40400000
 #define H_STRIDE            1920
 #define H_COUNT             2200
 #define H_ACTIVE            1920
@@ -66,6 +71,10 @@
 #define H_DE_MAX (H_WIDTH+H_BP+H_ACTIVE)
 #define V_DE_MIN (V_WIDTH+V_BP)
 #define V_DE_MAX (V_WIDTH+V_BP+V_ACTIVE)
+#define VIDEO_LENGTH  (H_ACTIVE*V_ACTIVE)
+#define AUDIO_LENGTH  (A_SAMPLE_FREQ/A_FREQ)
+#define VIDEO_BASEADDR DDR_BASEADDR + 0x2000000
+#define AUDIO_BASEADDR DDR_BASEADDR + 0x1000000
 
 
 
@@ -92,19 +101,21 @@ void ddr_video_wr() {
 }
 
 
-
-int som_hdmi_init( void )
+int HDMI_init( void )
 {
-    
+    u32 data;
+    int Status;
+    u8 ReadBuffer[2];
     /*for logicvc,*/
     ddr_video_wr();
     
-	{
-	  int i =0;
-	  for(i=0;i<4;i++)
-	  xil_printf("0x%x	",*(int *)(VIDEO_BASEADDR+4*i));
-	}
-    printf("\n");
+    data = Xil_In32(CF_CLKGEN_BASEADDR + (0x1f*4));
+    if ((data & 0x1) == 0x0) {
+      xil_printf("CLKGEN (148.5MHz) out of lock (0x%04x)\n\r", data);
+      return(0);
+    }
+
+    
         
     printf("******before setting vdma, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x\n",
     	Xil_In32((VDMA_BASEADDR + 0x0)), Xil_In32((VDMA_BASEADDR + 0x5c)), Xil_In32((VDMA_BASEADDR + 0x60)),
@@ -150,6 +161,47 @@ int som_hdmi_init( void )
     
 	printf("hdmi enable\n");
 
+#if 1
+    /**********************************************************/
+    /*SiI9134 register initial                                */
+    /**********************************************************/
+      IicPsMasterPolled_Init(IIC_DEVICE_ID);
+
+      IicPsMasterPolled_Write(0x39, 0x05, 0x01);        //soft reset
+      IicPsMasterPolled_Write(0x39, 0x05, 0x00);        //soft reset
+      IicPsMasterPolled_Write(0x39, 0x08, 0xfd);        //PD#=1,power on mode
+
+      IicPsMasterPolled_Write(0x3d, 0x2f, 0x21);        //HDMI mode enable, 24bit per pixel(8 bits per channel; no packing)
+      IicPsMasterPolled_Write(0x3d, 0x3e, 0x03);        //Enable AVI infoFrame transmission, Enable(send in every VBLANK period)
+      IicPsMasterPolled_Write(0x3d, 0x40, 0x82);
+      IicPsMasterPolled_Write(0x3d, 0x41, 0x02);
+      IicPsMasterPolled_Write(0x3d, 0x42, 0x0d);
+      IicPsMasterPolled_Write(0x3d, 0x43, 0xf7);
+      IicPsMasterPolled_Write(0x3d, 0x44, 0x10);
+      IicPsMasterPolled_Write(0x3d, 0x45, 0x68);
+      IicPsMasterPolled_Write(0x3d, 0x46, 0x00);
+      IicPsMasterPolled_Write(0x3d, 0x47, 0x00);
+      IicPsMasterPolled_Write(0x3d, 0x3d, 0x07);
+
+      //display Device ID information
+      Status = IicPsMasterPolled_Read(0x39, 0x02,ReadBuffer);
+
+      if (Status != XST_SUCCESS)  {
+          return XST_FAILURE;
+      }
+      else{
+          xil_printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
+      }
+
+
+      Status = IicPsMasterPolled_Read(0x39, 0x03);
+      if (Status != XST_SUCCESS)  {
+          return XST_FAILURE;
+      }
+      else    {
+          xil_printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
+      }
+
+#endif        
+
 }
-
-

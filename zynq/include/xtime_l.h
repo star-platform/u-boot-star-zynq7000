@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
 *
 * (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
 *
@@ -36,29 +36,61 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
-*
-* @file xpseudo_asm.h
-*
-* This header file contains macros for using inline assembler code.
+* @file xtime_l.h
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
-* Ver   Who  Date     Changes
-* ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* Ver   Who    Date     Changes
+* ----- ------ -------- ---------------------------------------------------
+* 1.00a rp/sdm 11/03/09 Initial release.
+* 3.06a sgd    05/15/12 Upadted get/set time functions to make use Global Timer
+* 3.06a asa    06/17/12 Reverted back the changes to make use Global Timer.
+* 3.07a sgd    07/05/12 Upadted get/set time functions to make use Global Timer
 * </pre>
 *
+* @note		None.
+*
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
+
+#ifndef XTIME_H /* prevent circular inclusions */
+#define XTIME_H /* by using protection macros */
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/***************************** Include Files *********************************/
+#include "xparameters.h"
+
+/***************** Macros (Inline Functions) Definitions *********************/
+
+/**************************** Type Definitions *******************************/
+
+typedef unsigned long long XTime;
+
+/************************** Constant Definitions *****************************/
+#define GLOBAL_TMR_BASEADDR               XPAR_GLOBAL_TMR_BASEADDR
+#define GTIMER_COUNTER_LOWER_OFFSET       0x00
+#define GTIMER_COUNTER_UPPER_OFFSET       0x04
+#define GTIMER_CONTROL_OFFSET             0x08
+
+
+/* Global Timer is always clocked at half of the CPU frequency */
+#define COUNTS_PER_SECOND          (XPAR_CPU_CORTEXA9_CORE_CLOCK_FREQ_HZ /2)
+/************************** Variable Definitions *****************************/
+
+/************************** Function Prototypes ******************************/
+
+void XTime_SetTime(XTime Xtime);
+void XTime_GetTime(XTime *Xtime);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* XTIME_H */

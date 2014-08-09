@@ -1,6 +1,7 @@
-/*******************************************************************************
+/******************************************************************************
 *
-* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
+*
+* (c) Copyright 2009 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -36,29 +37,35 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
 *
-* @file xpseudo_asm.h
+* @file xil_testcache.h
 *
-* This header file contains macros for using inline assembler code.
+* This file contains utility functions to test cache.
 *
-* <pre>
-* MODIFICATION HISTORY:
-*
-* Ver   Who  Date     Changes
+* Ver    Who    Date    Changes
 * ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
-* </pre>
+* 1.00a hbm  07/29/09 First release
 *
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
+
+#ifndef XIL_TESTCACHE_H	/* prevent circular inclusions */
+#define XIL_TESTCACHE_H	/* by using protection macros */
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+extern int Xil_TestDCacheRange(void);
+extern int Xil_TestDCacheAll(void);
+extern int Xil_TestICacheRange(void);
+extern int Xil_TestICacheAll(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* end of protection macro */

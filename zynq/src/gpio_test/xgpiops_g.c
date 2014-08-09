@@ -1,6 +1,6 @@
-/*******************************************************************************
+/******************************************************************************
 *
-* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
+* (c) Copyright 2010-13 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -36,29 +36,48 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
 *
-* @file xpseudo_asm.h
+* @file xgpiops_g.c
 *
-* This header file contains macros for using inline assembler code.
+* This file contains a configuration table that specifies the configuration
+* of GPIO devices in the system.
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
 * Ver   Who  Date     Changes
 * ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* 1.00a sv   01/15/10 First Release
 * </pre>
 *
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
-#endif
+
+/***************************** Include Files *********************************/
+
+#include "xgpiops.h"
+#include "xparameters.h"
+
+/************************** Constant Definitions *****************************/
+
+/**************************** Type Definitions *******************************/
+
+/***************** Macros (Inline Functions) Definitions *********************/
+
+/************************** Function Prototypes ******************************/
+
+/************************** Variable Prototypes ******************************/
+
+/**
+ * This table contains configuration information for each GPIO device
+ * in the system.
+ */
+XGpioPs_Config XGpioPs_ConfigTable[XPAR_XGPIOPS_NUM_INSTANCES] = {
+	{
+		XPAR_XGPIOPS_0_DEVICE_ID,	/* Unique ID of device */
+		XPAR_XGPIOPS_0_BASEADDR		/* Base address of device */
+	}
+};

@@ -1,6 +1,6 @@
-/*******************************************************************************
+/******************************************************************************
 *
-* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
+* (c) Copyright 2010-13 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -36,29 +36,71 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
 *
-* @file xpseudo_asm.h
+* @file xgpiops_sinit.c
 *
-* This header file contains macros for using inline assembler code.
+* This file contains the implementation of the XGpioPs driver's static
+* initialization functionality.
+*
+* @note		None.
 *
 * <pre>
+*
 * MODIFICATION HISTORY:
 *
 * Ver   Who  Date     Changes
 * ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* 1.00a sv   01/15/10 First Release
 * </pre>
 *
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
-#endif
+
+/***************************** Include Files *********************************/
+
+#include "xparameters.h"
+#include "xgpiops.h"
+
+/************************** Constant Definitions *****************************/
+
+/**************************** Type Definitions *******************************/
+
+/***************** Macros (Inline Functions) Definitions *********************/
+
+/************************** Function Prototypes ******************************/
+
+/************************** Variable Definitions *****************************/
+extern XGpioPs_Config XGpioPs_ConfigTable[];
+
+/*****************************************************************************/
+/**
+*
+* This function looks for the device configuration based on the unique device
+* ID. The table XGpioPs_ConfigTable[] contains the configuration information
+* for each device in the system.
+*
+* @param	DeviceId is the unique device ID of the device being looked up.
+*
+* @return	A pointer to the configuration table entry corresponding to the
+*		given device ID, or NULL if no match is found.
+*
+* @note		None.
+*
+******************************************************************************/
+XGpioPs_Config *XGpioPs_LookupConfig(u16 DeviceId)
+{
+	XGpioPs_Config *CfgPtr = NULL;
+	u32 Index;
+
+	for (Index = 0; Index < XPAR_XGPIOPS_NUM_INSTANCES; Index++) {
+		if (XGpioPs_ConfigTable[Index].DeviceId == DeviceId) {
+			CfgPtr = &XGpioPs_ConfigTable[Index];
+			break;
+		}
+	}
+
+	return CfgPtr;
+}

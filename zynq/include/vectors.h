@@ -1,4 +1,4 @@
-/*******************************************************************************
+/******************************************************************************
 *
 * (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
 *
@@ -36,29 +36,55 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
+*
+******************************************************************************/
 /*****************************************************************************/
 /**
+* @file vectors.h
 *
-* @file xpseudo_asm.h
-*
-* This header file contains macros for using inline assembler code.
+* This file contains the C level vector prototypes for the ARM Cortex A9 core.
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
 * Ver   Who  Date     Changes
-* ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* ----- ---- -------- ---------------------------------------------------
+* 1.00a ecm  10/20/10 Initial version, moved over from bsp area
 * </pre>
 *
+* @note
+*
+* None.
+*
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
+
+#ifndef _VECTORS_H_
+#define _VECTORS_H_
+
+/***************************** Include Files *********************************/
+
+#include "xil_types.h"
+#include "xil_assert.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+/***************** Macros (Inline Functions) Definitions *********************/
+
+/**************************** Type Definitions *******************************/
+
+/************************** Constant Definitions *****************************/
+
+/************************** Function Prototypes ******************************/
+void FIQInterrupt(void);
+void IRQInterrupt(void);
+void SWInterrupt(void);
+void DataAbortInterrupt(void);
+void PrefetchAbortInterrupt(void);
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* protection macro */

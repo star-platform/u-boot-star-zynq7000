@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* (c) Copyright 2010-12 Xilinx, Inc. All rights reserved.
+* (c) Copyright 2010-13 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -58,6 +58,8 @@
 *			XUARTPS_MEDEMSR_RIX to XUARTPS_MODEMSR_TERI
 *			XUARTPS_MEDEMSR_DSRX to XUARTPS_MODEMSR_DDSR
 *			XUARTPS_MEDEMSR_CTSX to XUARTPS_MODEMSR_DCTS
+* 1.05a hk     08/22/13 Added prototype for uart reset and related
+*			constant definitions.
 *
 * </pre>
 *
@@ -200,6 +202,7 @@ extern "C" {
  */
 #define XUARTPS_BAUDGEN_DISABLE		0x00000000 /**< Disable clock */
 #define XUARTPS_BAUDGEN_MASK		0x0000FFFF /**< Valid bits mask */
+#define XUARTPS_BAUDGEN_RESET_VAL	0x0000028B /**< Reset value */
 
 /** @name Baud Divisor Rate register
  *
@@ -211,7 +214,8 @@ extern "C" {
  * the MR_CCLK bit in the MR register.
  * @{
  */
-#define XUARTPS_BAUDDIV_MASK  0x000000FF	/**< 8 bit baud divider mask */
+#define XUARTPS_BAUDDIV_MASK        0x000000FF	/**< 8 bit baud divider mask */
+#define XUARTPS_BAUDDIV_RESET_VAL   0x0000000F	/**< Reset value */
 /* @} */
 
 
@@ -234,6 +238,18 @@ extern "C" {
 
 #define XUARTPS_RXWM_DISABLE	0x00000000  /**< Disable RX trigger interrupt */
 #define XUARTPS_RXWM_MASK	0x0000003F  /**< Valid bits mask */
+#define XUARTPS_RXWM_RESET_VAL	0x00000020  /**< Reset value */
+/* @} */
+
+/** @name Transmit FIFO Trigger Level Register
+ *
+ * Use the Transmit FIFO Trigger Level Register (TTRIG) to set the value at
+ * which the TX FIFO triggers an interrupt event.
+ * @{
+ */
+
+#define XUARTPS_TXWM_MASK	0x0000003F  /**< Valid bits mask */
+#define XUARTPS_TXWM_RESET_VAL	0x00000020  /**< Reset value */
 /* @} */
 
 /** @name Modem Control Register
@@ -404,6 +420,9 @@ extern "C" {
 void XUartPs_SendByte(u32 BaseAddress, u8 Data);
 
 u8 XUartPs_RecvByte(u32 BaseAddress);
+
+void XUartPs_ResetHw(u32 BaseAddress);
+
 /************************** Variable Definitions *****************************/
 
 #ifdef __cplusplus

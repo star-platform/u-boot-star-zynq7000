@@ -84,6 +84,7 @@ extern "C" {
 
 /***************************** Include Files *********************************/
 
+/* #include <string.h> */
 #include "xil_types.h"
 #include "xil_assert.h"
 

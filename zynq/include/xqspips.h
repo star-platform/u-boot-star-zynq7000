@@ -287,6 +287,7 @@ extern "C" {
 
 #include "xstatus.h"
 #include "xqspips_hw.h"
+/* #include <string.h> */
 
 /************************** Constant Definitions *****************************/
 

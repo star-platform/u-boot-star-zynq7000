@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* (c) Copyright 2009-2012 Xilinx, Inc. All rights reserved.
+* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -70,7 +70,7 @@ extern "C" {
 /***************************** Include Files *********************************/
 
 #include "xil_types.h"
-// #include "xpseudo_asm.h"
+#include "xpseudo_asm.h"
 #include "xil_printf.h"
 
 /************************** Constant Definitions *****************************/

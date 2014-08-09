@@ -1,6 +1,6 @@
-/*******************************************************************************
+/******************************************************************************
 *
-* (c) Copyright 2009-13  Xilinx, Inc. All rights reserved.
+* (c) Copyright 2002-2013 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -36,29 +36,58 @@
 *
 * THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE
 * AT ALL TIMES.
-*******************************************************************************/
-/*****************************************************************************/
+*
+******************************************************************************/
+/******************************************************************************/
 /**
+* @file xgpio_i.h
 *
-* @file xpseudo_asm.h
+* This header file contains internal identifiers, which are those shared
+* between the files of the driver. It is intended for internal use only.
 *
-* This header file contains macros for using inline assembler code.
+* NOTES:
+*
+* None.
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
 * Ver   Who  Date     Changes
 * ----- ---- -------- -----------------------------------------------
-* 1.00a ecm  10/18/09 First release
-* 3.04a sdm  01/02/12 Remove redundant dsb in mcr instruction.
+* 1.00a rmm  03/13/02 First release
+* 2.11a mta  03/21/07 Updated to new coding style
 * </pre>
-*
 ******************************************************************************/
-#include "xreg_cortexa9.h"
-#ifdef __GNUC__
- #include "xpseudo_asm_gcc.h"
-#elif defined (__ICCARM__)
- #include "xpseudo_asm_iccarm.h"
-#else
- #include "xpseudo_asm_rvct.h"
+
+#ifndef XGPIO_I_H		/* prevent circular inclusions */
+#define XGPIO_I_H		/* by using protection macros */
+
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/***************************** Include Files *********************************/
+
+#include "xgpio.h"
+
+/************************** Constant Definitions ****************************/
+
+
+/**************************** Type Definitions *******************************/
+
+
+/***************** Macros (Inline Functions) Definitions *********************/
+
+
+/************************** Function Prototypes ******************************/
+
+
+/************************** Variable Definitions ****************************/
+
+extern XGpio_Config XGpio_ConfigTable[];
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* end of protection macro */

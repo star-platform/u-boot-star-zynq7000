@@ -39,7 +39,12 @@ COBJS-y += common/outbyte.o
 COBJS-y += common/xuartps_hw.o
 COBJS-y += common/xil_cache.o
 COBJS-y += common/xil_exception.o
-
+COBJS-y += common/xgpio.o
+COBJS-y += common/xgpio_extra.o
+COBJS-y += common/xgpio_g.o
+COBJS-y += common/xgpio_intr.o
+COBJS-y += common/xgpio_selftest.o
+COBJS-y += common/xgpio_sinit.o
 
 COBJS-y += i2c_test/xiicps.o
 COBJS-y += i2c_test/xiicps_g.o
@@ -49,6 +54,11 @@ COBJS-y += i2c_test/xiicps_sinit.o
 COBJS-y += i2c_test/xiicps_selftest.o
 COBJS-y += i2c_test/xiicps_options.o
 COBJS-y += i2c_test/xiicps_selftest_example.o
+COBJS-y += i2c_test/xiicps_eeprom_polled_example.o
+COBJS-y += i2c_test/xiicps_master.o
+COBJS-y += i2c_test/xiicps_polled_master_example.o
+COBJS-y += i2c_test/zynq_i2c.o
+
 
 COBJS-y += scu_timer_test/xscutimer_polled_example.o
 COBJS-y += scu_timer_test/xscutimer_sinit.o
@@ -70,6 +80,7 @@ COBJS-y += usb_test/xusbps_hw.o
 COBJS-y += usb_test/xusbps_g.o
 COBJS-y += usb_test/xusbps_endpoint.o
 COBJS-y += usb_test/xusbps.o
+COBJS-y += usb_test/zynq_usb.o
 
 COBJS-y += qspi_test/xqspips_selftest_example.o
 COBJS-y += qspi_test/xqspips_sinit.o
@@ -89,8 +100,16 @@ COBJS-y += qspi_test/xqspips_selftest.o
 #COBJS-y += xemacps_sinit.o
 #COBJS-y += xemacps_g.o
 
+COBJS-y += gpio_test/xgpiops.o
+COBJS-y += gpio_test/xgpiops_g.o
+COBJS-y += gpio_test/xgpiops_hw.o
+COBJS-y += gpio_test/xgpiops_intr.o
+COBJS-y += gpio_test/xgpiops_sinit.o
+
+COBJS-y += oled_test/zynq_oled.o
 
 
+COBJS-y += hdmi_test/zynq_hdmi.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

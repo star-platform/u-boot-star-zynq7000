@@ -54,17 +54,28 @@
 #include "scutimer_header.h"
 #include "xscuwdt.h"
 #include "scuwdt_header.h"
+#include "xgpiops.h"
+#include "xgpio.h"
 
 enum {
-	MEMORY_TEST	= 1,
+    GPIO_TEST = 1,
+	MEMORY_TEST,
     SCU_GIC_SELF_TEST,
     SCU_GIC_INT_SETUP,
     /* EMAC_PS_INT_TEST */
     IIC0_PS_SELF_TEST,
     IIC1_PS_SELF_TEST,
     QSPI_PS_SELF_TEST,
-    SCU_TIMER_POLL_TEST
+    SCU_TIMER_POLL_TEST,
+    OLED_TEST,
+    HDMI_TEST,
+    EEPROM_TEST,
+    PL_LED_TEST
 };
+
+
+#define OUTPUT_PIN		    47	/* Pin connected to LED/Output */
+#define GPIO_DEVICE_ID		XPAR_XGPIOPS_0_DEVICE_ID
 
 char *opnum2opstr(int op_num)
 {
@@ -98,7 +109,18 @@ char *opnum2opstr(int op_num)
     case SCU_TIMER_POLL_TEST:        
 		strncpy(tmp_op, "Scu_Timer_Poll_test", 100);
         break;
-                
+    case OLED_TEST:        
+        strncpy(tmp_op, "OLED_Test", 100);
+        break;
+    case HDMI_TEST:        
+		strncpy(tmp_op, "HDMI_Test", 100);
+        break;
+    case EEPROM_TEST:        
+		strncpy(tmp_op, "EEPROM_Test", 100);
+        break;
+    case PL_LED_TEST:        
+		strncpy(tmp_op, "PL_LED_Test", 100);
+        break;
 	default:
 		printf("invalid zynq verification operation\n");
 		break;
@@ -154,6 +176,54 @@ void test_memory_range(struct memory_range_s *range) {
     
     status = Xil_TestMem8((u8*)range->base, 4096, 0xA5, XIL_TESTMEM_ALLMEMTESTS);
     printf("          8-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
+}
+
+
+int zynq_gpio_test()
+{
+    int i;
+	XGpioPs_Config *ConfigPtr;
+    int Status;
+    XGpioPs Gpio;
+    
+    printf("--Starting GPIO Test Application--\n\r");
+    
+
+	/*
+	 * Initialize the GPIO driver.
+	 */
+	ConfigPtr = XGpioPs_LookupConfig(GPIO_DEVICE_ID);
+	Status = XGpioPs_CfgInitialize(&Gpio, ConfigPtr,
+					ConfigPtr->BaseAddr);
+	if (Status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+    
+	XGpioPs_SetDirectionPin(&Gpio, 0, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, 0, 1);
+	/*
+	 * Set the GPIO output to be low.
+	 */
+	XGpioPs_WritePin(&Gpio, 0, 0x1);
+    
+	XGpioPs_WritePin(&Gpio, 0, 0x0);
+    
+#if 1 
+        /*
+         * Set the direction for the pin to be output and
+         * Enable the Output enable for the LED Pin.
+         */
+        XGpioPs_SetDirectionPin(&Gpio, OUTPUT_PIN, 1);
+        XGpioPs_SetOutputEnablePin(&Gpio, OUTPUT_PIN, 1);
+      /*
+         * Set the GPIO output to be low.
+         */
+        XGpioPs_WritePin(&Gpio, OUTPUT_PIN, 0x1);
+#endif
+    
+    
+    printf("--GPIO Test Application Complete--\n\r");
+    return 0;
 }
 
 
@@ -306,6 +376,79 @@ int ScuTimer_Poll_Test()
     }
 }
 
+void OLED_Test()
+{
+    printf("--Starting OLED Test Application--\n\r");
+    oled_init();
+    printf("--OLED Test Application Complete--\n\r");
+    return;
+}
+
+
+void HDMI_Test()
+{
+    printf("--Starting HDMI Test Application--\n\r");
+    HDMI_init();
+    printf("--HDMI Test Application Complete--\n\r");
+}
+
+
+
+/*****************************************************************************/
+/**
+* Main function to call the Iic EEPROM polled example.
+*
+* @param	None.
+*
+* @return	XST_SUCCESS if successful else XST_FAILURE.
+*
+* @note		None.
+*
+******************************************************************************/
+int IICPs_Eeprom_test(void)
+{
+	int Status;
+
+    printf("--Starting EEPROM Test Application--\n\r");
+
+	/*
+	 * Run the Iic EEPROM Polled Mode example.
+	 */
+	Status = IicPsEepromPolledExample();
+	if (Status != XST_SUCCESS) {
+		printf("IIC EEPROM Polled Mode Example Test Failed\r\n");
+		return XST_FAILURE;
+	}
+    
+    printf("--EEPROM Test Application Complete--\n\r");
+	return XST_SUCCESS;
+}
+
+
+int PL_Led_test(void)
+{
+	u32 Delay;
+	u32 Ledwidth;
+	u32 i;
+    XGpio GpioOutput;
+    // TBD
+    //XGpio_Initialize(&GpioOutput, XPAR_PL_LED4_DEVICE_ID);
+    XGpio_SetDataDirection(&GpioOutput, 1, 0x0);
+    XGpio_DiscreteWrite(&GpioOutput, 1, 0x0);
+
+    while (1)
+    {
+        for (Ledwidth = 0x0; Ledwidth < 4; Ledwidth++)
+        {
+              XGpio_DiscreteWrite(&GpioOutput, 1, 1 << Ledwidth);
+              udelay(1000000);
+              XGpio_DiscreteClear(&GpioOutput, 1, 1 << Ledwidth);
+        }
+    }
+
+    return 0;
+}
+
 /* ------------------------------------------------------------------------- */
 /* command form:
  *   fpga <op> <device number> <data addr> <datasize>
@@ -336,6 +479,9 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     
 	switch (op_num) 
     {
+    case GPIO_TEST:
+        zynq_gpio_test();
+        break;
 	case MEMORY_TEST: 
         zynq_memory_test();
 		break;
@@ -356,6 +502,18 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     case SCU_TIMER_POLL_TEST:
         ScuTimer_Poll_Test();
         break;
+    case OLED_TEST:
+        OLED_Test();
+        break;
+    case HDMI_TEST:
+        HDMI_Test();
+        break;
+    case EEPROM_TEST:
+        IICPs_Eeprom_test();
+        break;
+    case PL_LED_TEST:
+        PL_Led_test();
+        break;
 #if 0
     case DEVCFG_SELF_TEST:
         Dcfg_Self_Test();
@@ -366,7 +524,7 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
         EmacPsIntrTest();
         break;       
 #endif
-    
+        
     default:
         printf("invalid parameter, no zynq verification\n");        
         printf("***************************************\n");   
@@ -381,12 +539,15 @@ U_BOOT_CMD (zynq_verify, 3, 1, do_zynq_verify,
 	"verify star-zynq7000 board function",
 	"[do_zynq_verify] [number]\n"
 	"zynq verify operations no:operation\n"
-	"  1\t DDR test\n"
-	"  2\t Scu GIC self test\n"
-	"  3\t Scu GIC int setup\n"
-	"  4\t I2C0 test\n"
-	"  5\t I2C1 test\n"
-	"  6\t QSPI test\n"
-	"  7\t Scu Timer Poll test\n"
+	"  1\t GPIO test\n"
+	"  2\t DDR test\n"
+	"  3\t Scu GIC self test\n"
+	"  4\t Scu GIC int setup\n"
+	"  5\t I2C0 test\n"
+	"  6\t I2C1 test\n"
+	"  7\t QSPI test\n"
+	"  8\t Scu Timer Poll test\n"
+    "  9\t OLED test\n"
+    
 );
 
