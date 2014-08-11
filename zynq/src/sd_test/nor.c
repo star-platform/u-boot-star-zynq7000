@@ -41,71 +41,113 @@
 /*****************************************************************************/
 /**
 *
-* @file pcap.h
+* @file nor.c
 *
-* This file contains the interface for intiializing and accessing the PCAP
-*
+* Contains code for the NOR FLASH functionality.
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
 * Ver	Who	Date		Changes
 * ----- ---- -------- -------------------------------------------------------
-* 1.00a ecm	02/10/10 Initial release
-* 2.00a mb  16/08/12 Added the macros and function prototypes
+* 1.00a ecm	01/10/10 Initial release
+* 2.00a mb	25/05/12 mio init removed
+* 3.00a sgd	30/01/13 Code cleanup
+*
 * </pre>
 *
 * @note
 *
 ******************************************************************************/
-#ifndef ___PCAP_H___
-#define ___PCAP_H___
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /***************************** Include Files *********************************/
-#include "xdevcfg.h"
+#include "fsbl.h"
+#include "nor.h"
+#include "xstatus.h"
+
+/************************** Constant Definitions *****************************/
+
+/**************************** Type Definitions *******************************/
+
+
+/***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
 
-
-/* Multiboot register offset mask */
-#define PCAP_MBOOT_REG_REBOOT_OFFSET_MASK	0x1FFF
-#define PCAP_CTRL_PCFG_AES_FUSE_EFUSE_MASK	0x1000
-
-#define PCAP_LAST_TRANSFER 1
-#define MAX_COUNT 1000000000
-#define LVL_PL_PS 0x0000000F
-#define LVL_PS_PL 0x0000000A
-
-/* Fix for #672779 */
-#define FSBL_XDCFG_IXR_ERROR_FLAGS_MASK		(XDCFG_IXR_AXI_WERR_MASK | \
-						XDCFG_IXR_AXI_RTO_MASK |  \
-						XDCFG_IXR_AXI_RERR_MASK | \
-						XDCFG_IXR_RX_FIFO_OV_MASK | \
-						XDCFG_IXR_DMA_CMD_ERR_MASK |\
-						XDCFG_IXR_DMA_Q_OV_MASK |   \
-						XDCFG_IXR_P2D_LEN_ERR_MASK |\
-						XDCFG_IXR_PCFG_HMAC_ERR_MASK)
-
-int InitPcap(void);
-void PcapDumpRegisters(void);
-u32 ClearPcapStatus(void);
-void FabricInit(void);
-int XDcfgPollDone(u32 MaskValue, u32 MaxCount);
-u32 PcapLoadPartition(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
-		 	u32 DestinationLength, u32 Flags);
-u32 PcapDataTransfer(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
- 			u32 DestinationLength, u32 Flags);
-
 /************************** Variable Definitions *****************************/
-#ifdef __cplusplus
+
+extern u32 FlashReadBaseAddress;
+
+/******************************************************************************/
+/******************************************************************************/
+/**
+*
+* This function initializes the controller for the NOR FLASH interface.
+*
+* @param	None
+*
+* @return	None
+*
+* @note		None.
+*
+****************************************************************************/
+void InitNor(void)
+{
+
+	/*
+	 * Set up the base address for access
+	 */
+	FlashReadBaseAddress = XPS_NOR_BASEADDR;
 }
-#endif
 
+/******************************************************************************/
+/**
+*
+* This function provides the NOR FLASH interface for the Simplified header
+* functionality.
+*
+* @param	SourceAddress is address in FLASH data space
+* @param	DestinationAddress is address in OCM data space
+* @param	LengthBytes is the data length to transfer in bytes
+*
+* @return
+*		- XST_SUCCESS if the write completes correctly
+*		- XST_FAILURE if the write fails to completes correctly
+*
+* @note		None.
+*
+****************************************************************************/
+u32 NorAccess(u32 SourceAddress, u32 DestinationAddress, u32 LengthBytes)
+{
+	u32 Data;
+	u32 Count;
+	u32 *SourceAddr;
+	u32 *DestAddr;
+	u32 LengthWords;
 
-#endif /* ___PCAP_H___ */
+	/*
+	 * check for non-word tail
+	 * add bytes to cover the end
+	 */
+	if ((LengthBytes%4) != 0){
+
+		LengthBytes += (4 - (LengthBytes & 0x00000003));
+	}
+
+	LengthWords = LengthBytes >> WORD_LENGTH_SHIFT;
+
+	SourceAddr = (u32 *)(SourceAddress + FlashReadBaseAddress);
+	DestAddr = (u32 *)(DestinationAddress);
+
+	/*
+	 * Word transfers, endianism isn't an issue
+	 */
+	for (Count=0; Count < LengthWords; Count++){
+
+		Data = Xil_In32((u32)(SourceAddr++));
+		Xil_Out32((u32)(DestAddr++), Data);
+	}
+
+	return XST_SUCCESS;
+}
 

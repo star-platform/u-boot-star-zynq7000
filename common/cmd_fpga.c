@@ -36,6 +36,8 @@
 #include "xdevcfg_hw.h"
 #include "xdevcfg.h"
 #include "fsbl.h"
+#include "pcap.h"
+
 /* Local functions */
 static int fpga_get_op (char *opstr);
 
@@ -54,6 +56,8 @@ static int fpga_get_op (char *opstr);
 		    (((X)&0xff000000)>>24)
 
 
+extern u32 PcapDataTransfer(u32 *SourceDataPtr, u32 *DestinationDataPtr,
+				u32 SourceLength, u32 DestinationLength, u32 SecureTransfer);
 
 /* Convert bitstream data and load into the fpga */
 int fpga_loadbitstream(unsigned long dev, char* fpgadata, size_t size)
@@ -262,11 +266,11 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
         {
             u32 Status = 0;
         
-            printf("before unlock, status: %d...\n", LockStatus());
+            //printf("before unlock, status: %d...\n", LockStatus());
             
             SlcrUnlock();
             
-            printf("after unlock, status: %d...\n", LockStatus());
+            //printf("after unlock, status: %d...\n", LockStatus());
             Status = InitPcap();
             if (Status == 1) 
             {
@@ -277,16 +281,16 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
         big_to_little((u32 *)(data_addr), data_size);
         printf("after swap...\n");
         #if 1
-        rc = WritePcapXferData(
+        rc = PcapDataTransfer(
                 (u32 *)(data_addr),
                 (u32 *)XDCFG_DMA_INVALID_ADDRESS,
                 data_size, 0, XDCFG_NON_SECURE_PCAP_WRITE);   
         #endif
         
         printf("slcr_lock...\n");
-        printf("before lock, status: %d...\n", LockStatus());        
+        //printf("before lock, status: %d...\n", LockStatus());        
         SlcrLock();
-        printf("after lock, status: %d...\n", LockStatus());
+        //printf("after lock, status: %d...\n", LockStatus());
         
 		/* rc = fpga_loadbitstream(dev, fpga_data, data_size); */
 		break;

@@ -39,6 +39,7 @@
 #include "hdmi_header.h"
 #include <malloc.h>
 #include "xiicps.h"
+#include "i2c.h"
 
 #define IIC_DEVICE_ID	XPAR_XIICPS_1_DEVICE_ID
 #define INTC_DEVICE_ID	XPAR_SCUGIC_SINGLE_DEVICE_ID
@@ -106,15 +107,18 @@ int HDMI_init( void )
     u32 data;
     int Status;
     u8 ReadBuffer[2];
+
+    
+    si9134_i2c_init();
+
     /*for logicvc,*/
     ddr_video_wr();
-    
+        
     data = Xil_In32(CF_CLKGEN_BASEADDR + (0x1f*4));
     if ((data & 0x1) == 0x0) {
-      xil_printf("CLKGEN (148.5MHz) out of lock (0x%04x)\n\r", data);
+      printf("CLKGEN (148.5MHz) out of lock (0x%04x)\n\r", data);
       return(0);
     }
-
     
         
     printf("******before setting vdma, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x\n",
@@ -161,12 +165,12 @@ int HDMI_init( void )
     
 	printf("hdmi enable\n");
 
-#if 1
+#if 0
     /**********************************************************/
     /*SiI9134 register initial                                */
     /**********************************************************/
       IicPsMasterPolled_Init(IIC_DEVICE_ID);
-
+      
       IicPsMasterPolled_Write(0x39, 0x05, 0x01);        //soft reset
       IicPsMasterPolled_Write(0x39, 0x05, 0x00);        //soft reset
       IicPsMasterPolled_Write(0x39, 0x08, 0xfd);        //PD#=1,power on mode
@@ -182,7 +186,7 @@ int HDMI_init( void )
       IicPsMasterPolled_Write(0x3d, 0x46, 0x00);
       IicPsMasterPolled_Write(0x3d, 0x47, 0x00);
       IicPsMasterPolled_Write(0x3d, 0x3d, 0x07);
-
+        
       //display Device ID information
       Status = IicPsMasterPolled_Read(0x39, 0x02,ReadBuffer);
 
@@ -190,18 +194,20 @@ int HDMI_init( void )
           return XST_FAILURE;
       }
       else{
-          xil_printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
+          printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
       }
 
-
+        
       Status = IicPsMasterPolled_Read(0x39, 0x03);
       if (Status != XST_SUCCESS)  {
           return XST_FAILURE;
       }
       else    {
-          xil_printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
+          printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
       }
 
-#endif        
+#endif   
+
+
 
 }

@@ -747,11 +747,9 @@ void board_init_r(gd_t *id, ulong dest_addr)
 	}
 #endif
 
-    
-#if 1
         /* add by star-star */
         usb_phy_init();
-        
+#if 0
         si9134_i2c_init();
 #endif
     

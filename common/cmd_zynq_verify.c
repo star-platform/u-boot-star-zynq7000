@@ -56,10 +56,12 @@
 #include "scuwdt_header.h"
 #include "xgpiops.h"
 #include "xgpio.h"
+#include "sd.h"
 
 enum {
-    GPIO_TEST = 1,
-	MEMORY_TEST,
+    PS_GPIO_TEST = 1,
+	PS_MEMORY_TEST,
+	PS_SD_TEST,
     SCU_GIC_SELF_TEST,
     SCU_GIC_INT_SETUP,
     /* EMAC_PS_INT_TEST */
@@ -67,14 +69,15 @@ enum {
     IIC1_PS_SELF_TEST,
     QSPI_PS_SELF_TEST,
     SCU_TIMER_POLL_TEST,
-    OLED_TEST,
-    HDMI_TEST,
+    PL_OLED_TEST,
+    PL_HDMI_TEST,
     EEPROM_TEST,
     PL_LED_TEST
 };
 
 
-#define OUTPUT_PIN		    47	/* Pin connected to LED/Output */
+#define OUTPUT_PIN		    47	
+#define GPIO_LED_PIN        0    /* Pin connected to LED/Output */
 #define GPIO_DEVICE_ID		XPAR_XGPIOPS_0_DEVICE_ID
 
 char *opnum2opstr(int op_num)
@@ -82,10 +85,17 @@ char *opnum2opstr(int op_num)
     char tmp_op[100];
     switch (op_num)
     {
-	case MEMORY_TEST:
-		strncpy(tmp_op, "DDR_test", 100);
+
+	case PS_GPIO_TEST:
+		strncpy(tmp_op, "PS_GPIO_LED_test", 100);
 		break;
         
+	case PS_MEMORY_TEST:
+		strncpy(tmp_op, "PS_Memory_test", 100);
+		break;
+    case PS_SD_TEST:
+		strncpy(tmp_op, "PS_SD_test", 100);
+        break;
     case SCU_GIC_SELF_TEST:
 		strncpy(tmp_op, "Scu_GIC_self_test", 100);
         break;
@@ -93,11 +103,11 @@ char *opnum2opstr(int op_num)
     case SCU_GIC_INT_SETUP:
 		strncpy(tmp_op, "Scu_GIC_INT_Setup", 100);
         break;
-
+        
     case IIC0_PS_SELF_TEST:        
 		strncpy(tmp_op, "I2C0_self_test", 100);
         break;
-
+            
     case IIC1_PS_SELF_TEST:
 		strncpy(tmp_op, "I2C1_self_test", 100);
         break;
@@ -105,14 +115,14 @@ char *opnum2opstr(int op_num)
     case QSPI_PS_SELF_TEST:       
 		strncpy(tmp_op, "QSPI_self_test", 100);
         break;
-
+        
     case SCU_TIMER_POLL_TEST:        
 		strncpy(tmp_op, "Scu_Timer_Poll_test", 100);
         break;
-    case OLED_TEST:        
+    case PL_OLED_TEST:        
         strncpy(tmp_op, "OLED_Test", 100);
         break;
-    case HDMI_TEST:        
+    case PL_HDMI_TEST:        
 		strncpy(tmp_op, "HDMI_Test", 100);
         break;
     case EEPROM_TEST:        
@@ -179,14 +189,14 @@ void test_memory_range(struct memory_range_s *range) {
 }
 
 
-int zynq_gpio_test()
+int zynq_ps_gpio_led_test()
 {
     int i;
 	XGpioPs_Config *ConfigPtr;
     int Status;
     XGpioPs Gpio;
     
-    printf("--Starting GPIO Test Application--\n\r");
+    printf("---Starting PS GPIO LED Test Application---\n\r");
     
 
 	/*
@@ -198,47 +208,81 @@ int zynq_gpio_test()
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
-    
-	XGpioPs_SetDirectionPin(&Gpio, 0, 1);
-	XGpioPs_SetOutputEnablePin(&Gpio, 0, 1);
-	/*
-	 * Set the GPIO output to be low.
-	 */
-	XGpioPs_WritePin(&Gpio, 0, 0x1);
-    
-	XGpioPs_WritePin(&Gpio, 0, 0x0);
-    
-#if 1 
-        /*
-         * Set the direction for the pin to be output and
-         * Enable the Output enable for the LED Pin.
-         */
-        XGpioPs_SetDirectionPin(&Gpio, OUTPUT_PIN, 1);
-        XGpioPs_SetOutputEnablePin(&Gpio, OUTPUT_PIN, 1);
-      /*
-         * Set the GPIO output to be low.
-         */
-        XGpioPs_WritePin(&Gpio, OUTPUT_PIN, 0x1);
+
+
+    /* set GPIO_LED_PIN*/
+	XGpioPs_SetDirectionPin(&Gpio, GPIO_LED_PIN, 1);
+	XGpioPs_SetOutputEnablePin(&Gpio, GPIO_LED_PIN, 1);
+
+    /* led off-> on three times */
+    for (i = 0; i < 3; i++)
+    {
+        /* Set the GPIO output to be hign, led off */
+        XGpioPs_WritePin(&Gpio, 0, 0x1);
+        udelay(1000000);
+        /* Set the GPIO output to be hign, led on */
+        XGpioPs_WritePin(&Gpio, 0, 0x0);
+        /* delay 1s */
+        printf("GPIO LED On %i times\r\n", i+1);
+        udelay(1000000);
+    }
+#if 0
+    /*
+    * Set the direction for the pin to be output and
+    * Enable the Output enable for the LED Pin.
+    */
+    XGpioPs_SetDirectionPin(&Gpio, OUTPUT_PIN, 1);
+    XGpioPs_SetOutputEnablePin(&Gpio, OUTPUT_PIN, 1);
+    /*
+    * Set the GPIO output to be low.
+    */
+    XGpioPs_WritePin(&Gpio, OUTPUT_PIN, 0x1);
 #endif
     
     
-    printf("--GPIO Test Application Complete--\n\r");
+    printf("---PS GPIO LED Test Application Complete---\n\r");
+    printf("\r\n");
+     
     return 0;
 }
 
 
-int zynq_memory_test()
+int zynq_ps_memory_test()
 {
     int i;
-    printf("--Starting Memory Test Application--\n\r");
+    printf("---Starting Memory Test Application---\n\r");
     printf("NOTE: This application runs with D-Cache disabled.");
     printf("As a result, cacheline requests will not be generated\n\r");
 
-    for (i = 0; i < n_memory_ranges; i++) {
+    for (i = 0; i < n_memory_ranges; i++) 
+    {
         test_memory_range(&memory_ranges[i]);
     }
+    
+    printf("---Memory Test Application Complete---\n\r");
+    printf("\r\n");
+    return 0;
+}
 
-    printf("--Memory Test Application Complete--\n\r");
+
+int zynq_ps_sd_test()
+{
+    int Status;
+    
+    printf("---Starting SD Test Application---\n\r");
+    
+    Status = Get_Image_Info_From_SD();
+
+    if (Status == 0) 
+    {
+        printf("---SD Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---SD Test Application Failed---\n\r\r\n");
+    }
+    
+    
     return 0;
 }
 
@@ -376,20 +420,23 @@ int ScuTimer_Poll_Test()
     }
 }
 
-void OLED_Test()
+void PL_OLED_Test()
 {
-    printf("--Starting OLED Test Application--\n\r");
+    printf("---Starting OLED Test Application---\n\r");
     oled_init();
-    printf("--OLED Test Application Complete--\n\r");
+    printf("---OLED Test Application Complete--\n\r");
+    printf("\r\n");
     return;
 }
 
 
-void HDMI_Test()
+void PL_HDMI_Test()
 {
     printf("--Starting HDMI Test Application--\n\r");
     HDMI_init();
     printf("--HDMI Test Application Complete--\n\r");
+    printf("\r\n");
+    return;
 }
 
 
@@ -445,7 +492,7 @@ int PL_Led_test(void)
               XGpio_DiscreteClear(&GpioOutput, 1, 1 << Ledwidth);
         }
     }
-
+    
     return 0;
 }
 
@@ -466,7 +513,7 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	switch (argc) 
     {
 	case 2:		
-		op_num = simple_strtoul (argv[1], NULL, 16);
+		op_num = simple_strtoul (argv[1], NULL, 10);
         op_str = opnum2opstr(op_num);
 		printf("%s: op_num: 0x%x, operation:%s\n", __func__, op_num, op_str);
 		break;
@@ -479,12 +526,15 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     
 	switch (op_num) 
     {
-    case GPIO_TEST:
-        zynq_gpio_test();
+    case PS_GPIO_TEST:
+        zynq_ps_gpio_led_test();
         break;
-	case MEMORY_TEST: 
-        zynq_memory_test();
+	case PS_MEMORY_TEST: 
+        zynq_ps_memory_test();
 		break;
+    case PS_SD_TEST:
+        zynq_ps_sd_test();
+        break;
     case SCU_GIC_SELF_TEST:
         ScuGicSelfTest();
     case SCU_GIC_INT_SETUP:
@@ -502,11 +552,11 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     case SCU_TIMER_POLL_TEST:
         ScuTimer_Poll_Test();
         break;
-    case OLED_TEST:
-        OLED_Test();
+    case PL_OLED_TEST:
+        PL_OLED_Test();
         break;
-    case HDMI_TEST:
-        HDMI_Test();
+    case PL_HDMI_TEST:
+        PL_HDMI_Test();
         break;
     case EEPROM_TEST:
         IICPs_Eeprom_test();
@@ -539,15 +589,18 @@ U_BOOT_CMD (zynq_verify, 3, 1, do_zynq_verify,
 	"verify star-zynq7000 board function",
 	"[do_zynq_verify] [number]\n"
 	"zynq verify operations no:operation\n"
-	"  1\t GPIO test\n"
-	"  2\t DDR test\n"
-	"  3\t Scu GIC self test\n"
-	"  4\t Scu GIC int setup\n"
-	"  5\t I2C0 test\n"
-	"  6\t I2C1 test\n"
-	"  7\t QSPI test\n"
-	"  8\t Scu Timer Poll test\n"
-    "  9\t OLED test\n"
-    
+	"  1\t  PS GPIO LED test\n"
+	"  2\t  PS Memory test\n"
+	"  3\t  PS SD test\n"
+	"  4\t  Scu GIC self test\n"
+	"  4\t  Scu GIC int setup\n"
+	"  5\t  I2C0 test\n"
+	"  6\t  I2C1 test\n"
+	"  7\t  QSPI test\n"
+	"  8\t  Scu Timer Poll test\n"
+    "  9\t  OLED test\n"
+    "  10\t HDMI test\n"    
+    "  11\t I2C EEPROM test\n"
+    "  12\t PL LED test\n"
 );
 

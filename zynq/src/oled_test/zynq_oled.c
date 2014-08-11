@@ -170,15 +170,18 @@ void  ssd1331_init()
 
 	write_i(0xbe); /*set vcomh*/
 	write_i(0x3e); /*62*/
-
+    
 	write_i(0x25); /*clear*/
 	write_i(0x00);
 	write_i(0x5f);
 	write_i(0x00);
 	write_i(0x30);
-
+    
 	write_i(0xaf); /*set display on  */
-
+    mdelay(3000);
+    
+	write_i(0xae); /* Display off*/
+    
 }
 
 
@@ -187,9 +190,9 @@ void oled_init()
 {
     
     XGpio_Initialize(&Gpio_oled, XPAR_OLED_IO_DEVICE_ID);
-    XGpio_SetDataDirection(&Gpio_oled, 1,  0xff);             //data0~data7 is input, other is output
+    XGpio_SetDataDirection(&Gpio_oled, 1,  0xff);               //data0~data7 is input, other is output
     XGpio_DiscreteWrite(&Gpio_oled, 1, 0x7f00);                 //set all high for 8080 interface
-
+    
     ssd1331_init();
     block_write(0xf8,0x00);
     return;

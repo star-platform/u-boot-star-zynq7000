@@ -89,9 +89,9 @@ extern "C" {
 #endif
 #ifdef STDOUT_BASEADDRESS
 #define fsbl_printf(type,...) \
-		if (((type) & fsbl_dbg_current_types))  {xil_printf (__VA_ARGS__); }
+		if (((type) & fsbl_dbg_current_types))  {printf (__VA_ARGS__); }
 #else
-#define fsbl_printf(type, ...) {xil_printf (__VA_ARGS__); }
+#define fsbl_printf(type, ...) {printf (__VA_ARGS__); }
 #endif
 
 #ifdef __cplusplus

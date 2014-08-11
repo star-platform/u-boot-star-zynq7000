@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* (c) Copyright 2011-2012 Xilinx, Inc. All rights reserved.
+* (c) Copyright 2012-2013 Xilinx, Inc. All rights reserved.
 *
 * This file contains confidential and proprietary information of Xilinx, Inc.
 * and is protected under U.S. and international copyright and other
@@ -53,10 +53,23 @@
 * 1.00a ecm	02/10/10	Initial release
 * 2.00a jz	05/28/11	Add SD support
 * 2.00a mb	25/05/12	using the EDK provided devcfg driver
-* 				Nand/SD encryption and review comments
-* 3.00a mb  	16/08/12	Added the poll function
-				Removed the FPGA_RST_CTRL define
-				Added the flag for NON PS instantiated bitstream
+* 						Nand/SD encryption and review comments
+* 3.00a mb  16/08/12	Added the poll function
+*						Removed the FPGA_RST_CTRL define
+*						Added the flag for NON PS instantiated bitstream
+* 4.00a sgd 02/28/13	Fix for CR#681014 - ECC init in FSBL should not call
+*                                           fabric_init()
+* 						Fix for CR#689026 - FSBL doesn't hold PL resets active
+* 						                    during bit download
+* 						Fix for CR#699475 - FSBL functionality is broken and
+* 						                    its not able to boot in QSPI/NAND
+* 						                    bootmode
+*						Fix for CR#705664 - FSBL fails to decrypt the
+*						                    bitstream when the image is AES
+*						                    encrypted using non-zero key value
+* 6.00a kc  08/30/13    Fix for CR#722979 - Provide customer-friendly
+*                                           changelogs in FSBL
+*
 * </pre>
 *
 * @note
@@ -72,15 +85,11 @@
 #include "xparameters.h"
 #include "xil_exception.h"
 #include "xdevcfg.h"
+#include "sleep.h"
 
 #ifdef XPAR_XWDTPS_0_BASEADDR
 #include "xwdtps.h"
 #endif
-
-#undef fsbl_printf
-#define fsbl_printf(type, ...) {printf (__VA_ARGS__); }
-
-
 /************************** Constant Definitions *****************************/
 /*
  * The following constants map to the XPAR parameters created in the
@@ -89,20 +98,15 @@
  */
 
 #define DCFG_DEVICE_ID		XPAR_XDCFG_0_DEVICE_ID
-/* DDR location where the encrypted image will be copied to in case of
- * Nand and SD bootmodes
- */
-
-#define DDR_1MB 		0x00100000
 
 /**************************** Type Definitions *******************************/
 
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
+extern int XDcfgPollDone(u32 MaskValue, u32 MaxCount);
 
 /************************** Variable Definitions *****************************/
-
 /* Devcfg driver instance */
 static XDcfg DcfgInstance;
 XDcfg *DcfgInstPtr;
@@ -111,115 +115,96 @@ XDcfg *DcfgInstPtr;
 extern XWdtPs Watchdog;	/* Instance of WatchDog Timer	*/
 #endif
 
-extern ImageMoverType MoveImage;
-extern 	u32 Silicon_Version;
-extern int XDcfg_PollDone(u32 MaskValue, u32 MaxCount);
-void EnablePLtoPSLevel_Shifter(void);
 /******************************************************************************/
 /**
 *
-* This function does the DMA transfer
+* This function transfer data using PCAP
 *
-* @param 	SourceData is a pointer to where the data is read from
-* @param 	DestinationData is a pointer to where the data is written to
+* @param 	SourceDataPtr is a pointer to where the data is read from
+* @param 	DestinationDataPtr is a pointer to where the data is written to
 * @param 	SourceLength is the length of the data to be moved in words
 * @param 	DestinationLength is the length of the data to be moved in words
-* @param 	Flags indicated the encryption key location, 0 for non-encrypted
+* @param 	SecureTransfer indicated the encryption key location, 0 for
+* 			non-encrypted
 *
 * @return
-*		- XST_SUCCESS if the PCAP transfer is successful
-*		- XST_FAILURE if the PCAP transfer fails
-*		- XST_DEVICE_BUSY if the DMA queue is full.
+*		- XST_SUCCESS if the transfer is successful
+*		- XST_FAILURE if the transfer fails
 *
 * @note		 None
 *
 ****************************************************************************/
-u32 WritePcapXferData(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
-		 		u32 DestinationLength, u32 Flags) 
+u32 PcapDataTransfer(u32 *SourceDataPtr, u32 *DestinationDataPtr,
+				u32 SourceLength, u32 DestinationLength, u32 SecureTransfer)
 {
+	u32 Status;
+	u32 PcapTransferType = XDCFG_CONCURRENT_NONSEC_READ_WRITE;
 
-	u32 Status = XST_SUCCESS;	/* Status value */
-	u32 IsBitstream = 0;		/* Flag to check for bitstream */
+	/*
+	 * Check for secure transfer
+	 */
+	if (SecureTransfer) {
+		PcapTransferType = XDCFG_CONCURRENT_SECURE_READ_WRITE;
+	}
 
 #ifdef FSBL_PERF
-	XTime tXferCur = 0;    
+	XTime tXferCur = 0;
 	FsblGetGlobalTime(tXferCur);
 #endif
-	/* Check if it is a bistream */
-	if ((u32)DestinationData == XDCFG_DMA_INVALID_ADDRESS) {
-		IsBitstream = 1;
-	}
-    printf("%s: SourceData:0x%x, SrcLength:0x%x, dst_len:0x%x\n", 
-        __func__, (u32)(SourceData), SourceLength, DestinationLength);       
-    
-	/* Clear the pcap status registers */
-	Status = ClearPcap_Status();
+
+	/*
+	 * Clear the PCAP status registers
+	 */
+	Status = ClearPcapStatus();
 	if (Status != XST_SUCCESS) {
 		fsbl_printf(DEBUG_INFO,"PCAP_CLEAR_STATUS_FAIL \r\n");
 		return XST_FAILURE;
 	}
-        
-#ifndef PEEP_CODE
-	if(IsBitstream) {
-		/* New bitstream download sequence */
-		FabricInit();
-	}
-#endif
+
 #ifdef	XPAR_XWDTPS_0_BASEADDR
-	/* Prevent WDT reset */
+	/*
+	 * Prevent WDT reset
+	 */
 	XWdtPs_RestartWdt(&Watchdog);
 #endif
 
-        
-	 { 
-		/* set up the transfer */
-        /* sourceData = 0x00100000 */
-		SourceData = (u32*)((u32)SourceData | PCAP_LAST_TRANSFER);
-		DestinationData = (u32*)((u32)DestinationData | PCAP_LAST_TRANSFER);
-		/* Start the transfer */
-        
-        printf("%s: SourceData = 0x%x, DestinationData = 0x%x, SourceLength = 0x%x, DestinationLength = 0x%x\n", 
-                __func__, (u32)(SourceData), (u32)(DestinationData), SourceLength, DestinationLength);       
-        
-        
-		Status = XDcfg_Transfer(DcfgInstPtr, (u8 *)SourceData,
-						SourceLength,
-						(u8 *)DestinationData,
-						DestinationLength, Flags);
-	} 
-	
-	/* Check the status of the transfer */
+	/*
+	 * PCAP single DMA transfer setup
+	 */
+	SourceDataPtr = (u32*)((u32)SourceDataPtr | PCAP_LAST_TRANSFER);
+	DestinationDataPtr = (u32*)((u32)DestinationDataPtr | PCAP_LAST_TRANSFER);
+
+	/*
+	 * Transfer using Device Configuration
+	 */
+	Status = XDcfg_Transfer(DcfgInstPtr, (u8 *)SourceDataPtr,
+					SourceLength,
+					(u8 *)DestinationDataPtr,
+					DestinationLength, PcapTransferType);
 	if (Status != XST_SUCCESS) {
 		fsbl_printf(DEBUG_INFO,"Status of XDcfg_Transfer = %d \r \n",Status);
 		return XST_FAILURE;
 	}
-	/* Dump the pcap registers */
+
+	/*
+	 * Dump the PCAP registers
+	 */
 	PcapDumpRegisters();
-    
-	/* poll for the DMA done */
-	Status = XDcfg_PollDone(XDCFG_IXR_DMA_DONE_MASK, MAX_COUNT);
+
+	/*
+	 * Poll for the DMA done
+	 */
+	Status = XDcfgPollDone(XDCFG_IXR_DMA_DONE_MASK, MAX_COUNT);
 	if (Status != XST_SUCCESS) {
 		fsbl_printf(DEBUG_INFO,"PCAP_DMA_DONE_FAIL \r\n");
 		return XST_FAILURE;
 	}
+
 	fsbl_printf(DEBUG_INFO,"DMA Done ! \n\r");
 
-	/* Poll for FPGA Done */
-	if (IsBitstream) {
-		Status = XDcfg_PollDone(XDCFG_IXR_PCFG_DONE_MASK, MAX_COUNT);
-		if (Status != XST_SUCCESS) {
-			fsbl_printf(DEBUG_INFO,"PCAP_FPGA_DONE_FAIL\r\n");
-			return XST_FAILURE;
-		}
-	fsbl_printf(DEBUG_INFO,"FPGA Done ! \n\r");
-	}
-
-#ifndef PEEP_CODE
-	if(IsBitstream) {
-		EnablePLtoPSLevel_Shifter();
-	}
-#endif
-	/* For Performance measurement */
+	/*
+	 * For Performance measurement
+	 */
 #ifdef FSBL_PERF
 	XTime tXferEnd = 0;
 	fsbl_printf(DEBUG_GENERAL,"Time taken is ");
@@ -227,8 +212,131 @@ u32 WritePcapXferData(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
 #endif
 
 	return XST_SUCCESS;
-} /* End of WritePcapXferData*/
+}
 
+
+/******************************************************************************/
+/**
+*
+* This function loads PL partition using PCAP
+*
+* @param 	SourceDataPtr is a pointer to where the data is read from
+* @param 	DestinationDataPtr is a pointer to where the data is written to
+* @param 	SourceLength is the length of the data to be moved in words
+* @param 	DestinationLength is the length of the data to be moved in words
+* @param 	SecureTransfer indicated the encryption key location, 0 for
+* 			non-encrypted
+*
+* @return
+*		- XST_SUCCESS if the transfer is successful
+*		- XST_FAILURE if the transfer fails
+*
+* @note		 None
+*
+****************************************************************************/
+u32 PcapLoadPartition(u32 *SourceDataPtr, u32 *DestinationDataPtr,
+		u32 SourceLength, u32 DestinationLength, u32 SecureTransfer)
+{
+	u32 Status;
+	u32 PcapTransferType = XDCFG_NON_SECURE_PCAP_WRITE;
+
+	/*
+	 * Check for secure transfer
+	 */
+	if (SecureTransfer) {
+		PcapTransferType = XDCFG_SECURE_PCAP_WRITE;
+	}
+
+#ifdef FSBL_PERF
+	XTime tXferCur = 0;
+	FsblGetGlobalTime(tXferCur);
+#endif
+
+	/*
+	 * Clear the PCAP status registers
+	 */
+	Status = ClearPcapStatus();
+	if (Status != XST_SUCCESS) {
+		fsbl_printf(DEBUG_INFO,"PCAP_CLEAR_STATUS_FAIL \r\n");
+		return XST_FAILURE;
+	}
+
+	/*
+	 * For Bitstream case destination address will be 0xFFFFFFFF
+	 */
+	DestinationDataPtr = (u32*)XDCFG_DMA_INVALID_ADDRESS;
+
+	/*
+	 * New Bitstream download initialization sequence
+	 */
+	FabricInit();
+
+
+#ifdef	XPAR_XWDTPS_0_BASEADDR
+	/*
+	 * Prevent WDT reset
+	 */
+	XWdtPs_RestartWdt(&Watchdog);
+#endif
+
+	/*
+	 * PCAP single DMA transfer setup
+	 */
+	SourceDataPtr = (u32*)((u32)SourceDataPtr | PCAP_LAST_TRANSFER);
+	DestinationDataPtr = (u32*)((u32)DestinationDataPtr | PCAP_LAST_TRANSFER);
+
+	/*
+	 * Transfer using Device Configuration
+	 */
+	Status = XDcfg_Transfer(DcfgInstPtr, (u8 *)SourceDataPtr,
+					SourceLength,
+					(u8 *)DestinationDataPtr,
+					DestinationLength, PcapTransferType);
+	if (Status != XST_SUCCESS) {
+		fsbl_printf(DEBUG_INFO,"Status of XDcfg_Transfer = %d \r \n",Status);
+		return XST_FAILURE;
+	}
+
+
+	/*
+	 * Dump the PCAP registers
+	 */
+	PcapDumpRegisters();
+
+
+	/*
+	 * Poll for the DMA done
+	 */
+	Status = XDcfgPollDone(XDCFG_IXR_DMA_DONE_MASK, MAX_COUNT);
+	if (Status != XST_SUCCESS) {
+		fsbl_printf(DEBUG_INFO,"PCAP_DMA_DONE_FAIL \r\n");
+		return XST_FAILURE;
+	}
+
+	fsbl_printf(DEBUG_INFO,"DMA Done ! \n\r");
+
+	/*
+	 * Poll for FPGA Done
+	 */
+	Status = XDcfgPollDone(XDCFG_IXR_PCFG_DONE_MASK, MAX_COUNT);
+	if (Status != XST_SUCCESS) {
+		fsbl_printf(DEBUG_INFO,"PCAP_FPGA_DONE_FAIL\r\n");
+		return XST_FAILURE;
+	}
+
+	fsbl_printf(DEBUG_INFO,"FPGA Done ! \n\r");
+
+	/*
+	 * For Performance measurement
+	 */
+#ifdef FSBL_PERF
+	XTime tXferEnd = 0;
+	fsbl_printf(DEBUG_GENERAL,"Time taken is ");
+	FsblMeasurePerfTime(tXferCur,tXferEnd);
+#endif
+
+	return XST_SUCCESS;
+}
 
 /******************************************************************************/
 /**
@@ -237,14 +345,14 @@ u32 WritePcapXferData(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
 *
 * @param	none
 *
-* @return	
+* @return
 *		- XST_SUCCESS if the pcap driver initialization is successful
 *		- XST_FAILURE if the pcap driver initialization fails
 *
 * @note	 none
 *
 ****************************************************************************/
-int InitPcap(void) 
+int InitPcap(void)
 {
 	XDcfg_Config *ConfigPtr;
 	int Status = XST_SUCCESS;
@@ -261,9 +369,9 @@ int InitPcap(void)
 		fsbl_printf(DEBUG_INFO, "XDcfg_CfgInitialize failed \n\r");
 		return XST_FAILURE;
 	}
-	return XST_SUCCESS;
 
-} /* end of InitPcap */
+	return XST_SUCCESS;
+}
 
 /******************************************************************************/
 /**
@@ -278,118 +386,75 @@ int InitPcap(void)
 * @note		None
 *
 ****************************************************************************/
-void FabricInit(void) 
+void FabricInit(void)
 {
 	u32 PcapReg;
-	volatile u32 StatusReg;
-    volatile u32 ps_lvl_shftr_en;
-    u32 lvl_ps_pl_value = LVL_PS_PL;
-    
-    ps_lvl_shftr_en = PS_LVL_SHFTR_EN;
+	u32 StatusReg;
 
-        
-	fsbl_printf(DEBUG_INFO,"ps_lvl_shftr_en addr = 0x%x \r\n",ps_lvl_shftr_en);
-
-    printf("before write ps->pl, lock status: %d...\n", LockStatus());
-    
-	/* Set Level Shifters DT618760 - PS to PL enabling */
-	FsblOut32(ps_lvl_shftr_en, LVL_PS_PL);
-    
-    udelay(1000);    
+	/*
+	 * Set Level Shifters DT618760 - PS to PL enabling
+	 */
+	Xil_Out32(PS_LVL_SHFTR_EN, LVL_PS_PL);
 	fsbl_printf(DEBUG_INFO,"Level Shifter Value = 0x%x \r\n",
-				FsblIn32(ps_lvl_shftr_en));
+				Xil_In32(PS_LVL_SHFTR_EN));
 
-	/* Check if Fabric is already initialized  */
-	StatusReg = XDcfg_GetStatusRegister(DcfgInstPtr);
-	fsbl_printf(DEBUG_INFO,"Devcfg Status register = 0x%x \r\n",StatusReg);
-#ifdef FSBL_PERF
-	if ((StatusReg & XDCFG_STATUS_PCFG_INIT_MASK) ==
-			XDCFG_STATUS_PCFG_INIT_MASK) {
-		fsbl_printf(DEBUG_INFO,
-				"PCAP:Fabric is already in INIT state = 0x%.8x\r\n",
-				StatusReg);
-		return;
-	} else {
-#endif
-        
-        
-		PcapReg = XDcfg_ReadReg(DcfgInstPtr->Config.BaseAddr,
+	/*
+	 * Get DEVCFG controller settings
+	 */
+	PcapReg = XDcfg_ReadReg(DcfgInstPtr->Config.BaseAddr,
 				XDCFG_CTRL_OFFSET);
 
-        fsbl_printf(DEBUG_INFO,"DcfgInstPtr baseaddr = 0x%x, PcapReg: 0x%x\r\n", 
-            DcfgInstPtr->Config.BaseAddr, PcapReg);
-         
-		/* Setting PCFG_PROG_B signal to high */
-		XDcfg_WriteReg(DcfgInstPtr->Config.BaseAddr, XDCFG_CTRL_OFFSET,
+	/*
+	 * Setting PCFG_PROG_B signal to high
+	 */
+	XDcfg_WriteReg(DcfgInstPtr->Config.BaseAddr, XDCFG_CTRL_OFFSET,
 				(PcapReg | XDCFG_CTRL_PCFG_PROG_B_MASK));
-        
-		/* Setting PCFG_PROG_B signal to low */
-		XDcfg_WriteReg(DcfgInstPtr->Config.BaseAddr, XDCFG_CTRL_OFFSET,
+
+	/*
+	 * 5msec delay
+	 */
+	udelay(5000);
+	/*
+	 * Setting PCFG_PROG_B signal to low
+	 */
+	XDcfg_WriteReg(DcfgInstPtr->Config.BaseAddr, XDCFG_CTRL_OFFSET,
 				(PcapReg & ~XDCFG_CTRL_PCFG_PROG_B_MASK));
 
-		/* Polling the PCAP_INIT status for Reset */
-		while(XDcfg_GetStatusRegister(DcfgInstPtr) &
-				XDCFG_STATUS_PCFG_INIT_MASK);
-        
-		/* Setting PCFG_PROG_B signal to low */
-		XDcfg_WriteReg(DcfgInstPtr->Config.BaseAddr, XDCFG_CTRL_OFFSET,
-				(PcapReg | XDCFG_CTRL_PCFG_PROG_B_MASK));
-
-		/* Polling the PCAP_INIT status for Set */
-		while(!(XDcfg_GetStatusRegister(DcfgInstPtr) &
-				XDCFG_STATUS_PCFG_INIT_MASK));
-#ifdef FSBL_PERF
-	} /* end of else */
-#endif
-	fsbl_printf(DEBUG_INFO,"PCAP:Fabric is Initialized = 0x%.8x\r\n",
-			StatusReg);
-} /* End of FabricInit */
-
-/******************************************************************************/
-/**
-*
-* This function programs sets the level shifter.
-*
-* @param	None
-*
-* @return	None
-*
-* @note		 none
-*
-****************************************************************************/
-
-void EnablePLtoPSLevel_Shifter(void)
-{
 	/*
-	 * FSBL will not enable the level shifters for a NON PS instantiated
-	 * Bitstream
-	 * CR# 671028
-	 * This flag can be set during compilation for a NON PS instantiated
-	 * bitstream
+	 * 5msec delay
 	 */
-#ifndef NON_PS_INSTANTIATED_BITSTREAM
-	u32 PcapReg;
+	udelay(5000);
+	/*
+	 * Polling the PCAP_INIT status for Reset
+	 */
+	while(XDcfg_GetStatusRegister(DcfgInstPtr) &
+				XDCFG_STATUS_PCFG_INIT_MASK);
 
-	/* Set Level Shifters DT618760*/
-	PcapReg = LVL_PL_PS;
-	FsblOut32(PS_LVL_SHFTR_EN, PcapReg);
-	fsbl_printf(DEBUG_INFO,"Enabling Level Shifters PL to PS "
-			"Address = 0x%x Value = 0x%x \n\r",
-			PS_LVL_SHFTR_EN, FsblIn32(PS_LVL_SHFTR_EN));
+	/*
+	 * Setting PCFG_PROG_B signal to high
+	 */
+	XDcfg_WriteReg(DcfgInstPtr->Config.BaseAddr, XDCFG_CTRL_OFFSET,
+			(PcapReg | XDCFG_CTRL_PCFG_PROG_B_MASK));
 
-	/* Enable AXI interface */
-	FsblOut32(FPGA_RESET_REG, 0);
-	fsbl_printf(DEBUG_INFO,"AXI Interface enabled \n\r");
-	fsbl_printf(DEBUG_INFO, "FPGA Reset Register "
-			"Address = 0x%x , Value = 0x%x \r\n",
-			FPGA_RESET_REG ,FsblIn32(FPGA_RESET_REG));
-#endif
-} /* End of EnablePLtoPSLevel_Shifter */
+	/*
+	 * Polling the PCAP_INIT status for Set
+	 */
+	while(!(XDcfg_GetStatusRegister(DcfgInstPtr) &
+			XDCFG_STATUS_PCFG_INIT_MASK));
+
+	/*
+	 * Get Device configuration status
+	 */
+	StatusReg = XDcfg_GetStatusRegister(DcfgInstPtr);
+	fsbl_printf(DEBUG_INFO,"Devcfg Status register = 0x%x \r\n",StatusReg);
+
+	fsbl_printf(DEBUG_INFO,"PCAP:Fabric is Initialized done\r\n");
+}
 
 /******************************************************************************/
 /**
 *
-* This function Clears the pcap status registers.
+* This function Clears the PCAP status registers.
 *
 * @param	None
 *
@@ -400,30 +465,37 @@ void EnablePLtoPSLevel_Shifter(void)
 * @note		None
 *
 ****************************************************************************/
-u32 ClearPcap_Status(void) 
+u32 ClearPcapStatus(void)
 {
 
-	volatile u32 StatusReg;
+	u32 StatusReg;
 	u32 IntStatusReg;
 
-	IntStatusReg = XDcfg_IntrGetStatus(DcfgInstPtr);
-
-	/* Clear it all, so if Boot ROM comes back, it can proceed */
+	/*
+	 * Clear it all, so if Boot ROM comes back, it can proceed
+	 */
 	XDcfg_IntrClear(DcfgInstPtr, 0xFFFFFFFF);
 
-	/* Fix for #672779 */
+	/*
+	 * Get PCAP Interrupt Status Register
+	 */
+	IntStatusReg = XDcfg_IntrGetStatus(DcfgInstPtr);
 	if (IntStatusReg & FSBL_XDCFG_IXR_ERROR_FLAGS_MASK) {
 		fsbl_printf(DEBUG_INFO,"FATAL errors in PCAP %x\r\n",
 				IntStatusReg);
 		return XST_FAILURE;
 	}
 
-	/* Read the PCAP status register for DMA status */
+	/*
+	 * Read the PCAP status register for DMA status
+	 */
 	StatusReg = XDcfg_GetStatusRegister(DcfgInstPtr);
 
 	fsbl_printf(DEBUG_INFO,"PCAP:StatusReg = 0x%.8x\r\n", StatusReg);
 
-	/* If the queue is full, return w/ XST_DEVICE_BUSY */
+	/*
+	 * If the queue is full, return w/ XST_DEVICE_BUSY
+	 */
 	if ((StatusReg & XDCFG_STATUS_DMA_CMD_Q_F_MASK) ==
 			XDCFG_STATUS_DMA_CMD_Q_F_MASK) {
 
@@ -433,7 +505,9 @@ u32 ClearPcap_Status(void)
 
 	fsbl_printf(DEBUG_INFO,"PCAP:device ready\r\n");
 
-	/* There are unacknowledged DMA commands outstanding */
+	/*
+	 * There are unacknowledged DMA commands outstanding
+	 */
 	if ((StatusReg & XDCFG_STATUS_DMA_CMD_Q_E_MASK) !=
 			XDCFG_STATUS_DMA_CMD_Q_E_MASK) {
 
@@ -441,13 +515,16 @@ u32 ClearPcap_Status(void)
 
 		if ((IntStatusReg & XDCFG_IXR_DMA_DONE_MASK) !=
 				XDCFG_IXR_DMA_DONE_MASK){
-
-			/* error state, transfer cannot occur */
+			/*
+			 * Error state, transfer cannot occur
+			 */
 			fsbl_printf(DEBUG_INFO,"PCAP:IntStatus indicates error\r\n");
 			return XST_FAILURE;
 		}
 		else {
-			/* clear out the status */
+			/*
+			 * clear out the status
+			 */
 			XDcfg_IntrClear(DcfgInstPtr, XDCFG_IXR_DMA_DONE_MASK);
 		}
 	}
@@ -455,11 +532,12 @@ u32 ClearPcap_Status(void)
 	if ((StatusReg & XDCFG_STATUS_DMA_DONE_CNT_MASK) != 0) {
 		XDcfg_IntrClear(DcfgInstPtr, StatusReg &
 				XDCFG_STATUS_DMA_DONE_CNT_MASK);
-
 	}
+
 	fsbl_printf(DEBUG_INFO,"PCAP:Clear done\r\n");
+
 	return XST_SUCCESS;
-} /* End of clear function */
+}
 
 /******************************************************************************/
 /**
@@ -477,53 +555,52 @@ void PcapDumpRegisters (void) {
 
 	fsbl_printf(DEBUG_INFO,"PCAP register dump:\r\n");
 
-	fsbl_printf(DEBUG_INFO,"PCAP CTRL %x: %08x\r\n",
+	fsbl_printf(DEBUG_INFO,"PCAP CTRL 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_CTRL_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_CTRL_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP LOCK %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_CTRL_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP LOCK 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_LOCK_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_LOCK_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP CONFIG %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_LOCK_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP CONFIG 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_CFG_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_CFG_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP ISR %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_CFG_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP ISR 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_INT_STS_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_INT_STS_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP IMR %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_INT_STS_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP IMR 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_INT_MASK_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_INT_MASK_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP STATUS %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_INT_MASK_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP STATUS 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_STATUS_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_STATUS_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP DMA SRC ADDR %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_STATUS_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP DMA SRC ADDR 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_SRC_ADDR_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_SRC_ADDR_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP DMA DEST ADDR %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_SRC_ADDR_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP DMA DEST ADDR 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_DEST_ADDR_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_DEST_ADDR_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP DMA SRC LEN %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_DEST_ADDR_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP DMA SRC LEN 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_SRC_LEN_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_SRC_LEN_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP DMA DEST LEN %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_SRC_LEN_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP DMA DEST LEN 0x%x: 0x%08x\r\n",
 			XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_DEST_LEN_OFFSET,
-			FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_DEST_LEN_OFFSET));
-
-	fsbl_printf(DEBUG_INFO,"PCAP ROM SHADOW CTRL %x: %08x\r\n",
+			Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_DMA_DEST_LEN_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP ROM SHADOW CTRL 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_ROM_SHADOW_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_ROM_SHADOW_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP MBOOT %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_ROM_SHADOW_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP MBOOT 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_MULTIBOOT_ADDR_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_MULTIBOOT_ADDR_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP SW ID %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_MULTIBOOT_ADDR_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP SW ID 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_SW_ID_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_SW_ID_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP UNLOCK %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_SW_ID_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP UNLOCK 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_UNLOCK_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_UNLOCK_OFFSET));
-	fsbl_printf(DEBUG_INFO,"PCAP MCTRL %x: %08x\r\n",
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_UNLOCK_OFFSET));
+	fsbl_printf(DEBUG_INFO,"PCAP MCTRL 0x%x: 0x%08x\r\n",
 		XPS_DEV_CFG_APB_BASEADDR + XDCFG_MCTRL_OFFSET,
-		FsblIn32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_MCTRL_OFFSET));
-} /* End of pcap dump register function */
+		Xil_In32(XPS_DEV_CFG_APB_BASEADDR + XDCFG_MCTRL_OFFSET));
+}
 
 /******************************************************************************/
 /**
@@ -532,37 +609,47 @@ void PcapDumpRegisters (void) {
 *
 * @param	none
 *
-* @return	
+* @return
 *		- XST_SUCCESS if polling for DMA/FPGA done is successful
 *		- XST_FAILURE if polling for DMA/FPGA done fails
 *
 * @note		none
 *
 ****************************************************************************/
-int XDcfg_PollDone(u32 MaskValue, u32 MaxCount)
+int XDcfgPollDone(u32 MaskValue, u32 MaxCount)
 {
-	/* poll for the DMA done */
 	int Count = MaxCount;
-	volatile u32 IntrStsReg = 0;
-	/* poll for the DMA done */
+	u32 IntrStsReg = 0;
 
+	/*
+	 * poll for the DMA done
+	 */
 	IntrStsReg = XDcfg_IntrGetStatus(DcfgInstPtr);
 	while ((IntrStsReg & MaskValue) !=
 				MaskValue) {
 		IntrStsReg = XDcfg_IntrGetStatus(DcfgInstPtr);
 		Count -=1;
 
+		if (IntrStsReg & FSBL_XDCFG_IXR_ERROR_FLAGS_MASK) {
+				fsbl_printf(DEBUG_INFO,"FATAL errors in PCAP %x\r\n",
+						IntrStsReg);
+				PcapDumpRegisters();
+				return XST_FAILURE;
+		}
+
 		if(!Count) {
-			fsbl_printf(DEBUG_GENERAL,"PCAP transfer timed out \r \n");
+			fsbl_printf(DEBUG_GENERAL,"PCAP transfer timed out \r\n");
 			return XST_FAILURE;
 		}
 		if (Count > (MAX_COUNT-100)) {
 			fsbl_printf(DEBUG_GENERAL,".");
 		}
 	}
-	fsbl_printf(DEBUG_GENERAL,"poll for the DMA done\n\r");
-	 /* end of while */
+
+	fsbl_printf(DEBUG_GENERAL,"\n\r");
+
 	XDcfg_IntrClear(DcfgInstPtr, IntrStsReg & MaskValue);
+
 	return XST_SUCCESS;
-} /* End of poll function */
+}
 

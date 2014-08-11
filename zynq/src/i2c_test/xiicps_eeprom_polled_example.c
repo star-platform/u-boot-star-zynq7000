@@ -136,9 +136,9 @@ XIicPs IicInstance;		/* The instance of the IIC device. */
 /*
  * Write buffer for writing a page.
  */
-u8 WriteBuffer[sizeof(AddressType) + PAGE_SIZE];
+u8 WriteBuffer_1[sizeof(AddressType) + PAGE_SIZE];
 
-u8 ReadBuffer[PAGE_SIZE];	/* Read buffer for reading a page. */
+u8 ReadBuffer_1[PAGE_SIZE];	/* Read buffer for reading a page. */
 
 /************************** Function Definitions *****************************/
 
@@ -193,16 +193,16 @@ int IicPsEepromPolledExample(void)
 	 * Initialize the data to write and the read buffer.
 	 */
 	if (sizeof(Address) == 1) {
-		WriteBuffer[0] = (u8) (Address);
+		WriteBuffer_1[0] = (u8) (Address);
 	} else {
-		WriteBuffer[0] = (u8) (Address >> 8);
-		WriteBuffer[1] = (u8) (Address);
-		ReadBuffer[Index] = 0;
+		WriteBuffer_1[0] = (u8) (Address >> 8);
+		WriteBuffer_1[1] = (u8) (Address);
+		ReadBuffer_1[Index] = 0;
 	}
 
 	for (Index = 0; Index < PAGE_SIZE; Index++) {
-		WriteBuffer[sizeof(Address) + Index] = 0xFF;
-		ReadBuffer[Index] = 0;
+		WriteBuffer_1[sizeof(Address) + Index] = 0xFF;
+		ReadBuffer_1[Index] = 0;
 	}
 
 	/*
@@ -216,7 +216,7 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Read from the EEPROM.
 	 */
-	Status = EepromReadData(ReadBuffer, PAGE_SIZE);
+	Status = EepromReadData(ReadBuffer_1, PAGE_SIZE);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -225,27 +225,27 @@ int IicPsEepromPolledExample(void)
 	 * Verify the data read against the data written.
 	 */
 	for (Index = 0; Index < PAGE_SIZE; Index++) {
-		if (ReadBuffer[Index] != WriteBuffer[Index + sizeof(Address)]) {
+		if (ReadBuffer_1[Index] != WriteBuffer_1[Index + sizeof(Address)]) {
 			return XST_FAILURE;
 		}
 
-		ReadBuffer[Index] = 0;
+		ReadBuffer_1[Index] = 0;
 	}
 
 	/*
 	 * Initialize the data to write and the read buffer.
 	 */
 	if (sizeof(Address) == 1) {
-		WriteBuffer[0] = (u8) (Address);
+		WriteBuffer_1[0] = (u8) (Address);
 	} else {
-		WriteBuffer[0] = (u8) (Address >> 8);
-		WriteBuffer[1] = (u8) (Address);
-		ReadBuffer[Index] = 0;
+		WriteBuffer_1[0] = (u8) (Address >> 8);
+		WriteBuffer_1[1] = (u8) (Address);
+		ReadBuffer_1[Index] = 0;
 	}
 
 	for (Index = 0; Index < PAGE_SIZE; Index++) {
-		WriteBuffer[sizeof(Address) + Index] = Index + 10;
-		ReadBuffer[Index] = 0;
+		WriteBuffer_1[sizeof(Address) + Index] = Index + 10;
+		ReadBuffer_1[Index] = 0;
 	}
 
 	/*
@@ -259,7 +259,7 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Read from the EEPROM.
 	 */
-	Status = EepromReadData(ReadBuffer, PAGE_SIZE);
+	Status = EepromReadData(ReadBuffer_1, PAGE_SIZE);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -268,11 +268,11 @@ int IicPsEepromPolledExample(void)
 	 * Verify the data read against the data written.
 	 */
 	for (Index = 0; Index < PAGE_SIZE; Index++) {
-		if (ReadBuffer[Index] != WriteBuffer[Index + sizeof(Address)]) {
+		if (ReadBuffer_1[Index] != WriteBuffer_1[Index + sizeof(Address)]) {
 			return XST_FAILURE;
 		}
 
-		ReadBuffer[Index] = 0;
+		ReadBuffer_1[Index] = 0;
 	}
 
 	return XST_SUCCESS;
@@ -298,7 +298,7 @@ int EepromWriteData(u16 ByteCount)
 	/*
 	 * Send the Data.
 	 */
-	Status = XIicPs_MasterSendPolled(&IicInstance, WriteBuffer,
+	Status = XIicPs_MasterSendPolled(&IicInstance, WriteBuffer_1,
 					  ByteCount, IIC_SLAVE_ADDR);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
@@ -338,11 +338,11 @@ int EepromReadData(u8 *BufferPtr, u16 ByteCount)
 	 * Position the Pointer in EEPROM.
 	 */
 	if (sizeof(Address) == 1) {
-		WriteBuffer[0] = (u8) (Address);
+		WriteBuffer_1[0] = (u8) (Address);
 	}
 	else {
-		WriteBuffer[0] = (u8) (Address >> 8);
-		WriteBuffer[1] = (u8) (Address);
+		WriteBuffer_1[0] = (u8) (Address >> 8);
+		WriteBuffer_1[1] = (u8) (Address);
 	}
 
 	Status = EepromWriteData(sizeof(Address));
@@ -380,7 +380,7 @@ int EepromReadData(u8 *BufferPtr, u16 ByteCount)
 ****************************************************************************/
 int MuxInit(void)
 {
-	u8 WriteBuffer;
+	u8 WriteBuffer_1;
 	u8 MuxIicAddr = IIC_MUX_ADDRESS;
 	u8 Buffer = 0;
 	int Status = 0;
@@ -388,12 +388,12 @@ int MuxInit(void)
 	/*
 	 * Channel select value for EEPROM.
 	 */
-	WriteBuffer = 0x04;
+	WriteBuffer_1 = 0x04;
 
 	/*
 	 * Send the Data.
 	 */
-	Status = XIicPs_MasterSendPolled(&IicInstance, &WriteBuffer,1,
+	Status = XIicPs_MasterSendPolled(&IicInstance, &WriteBuffer_1,1,
 					MuxIicAddr);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;

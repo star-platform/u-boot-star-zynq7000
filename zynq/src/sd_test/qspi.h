@@ -41,71 +41,95 @@
 /*****************************************************************************/
 /**
 *
-* @file pcap.h
+* @file qspi.h
 *
-* This file contains the interface for intiializing and accessing the PCAP
-*
+* This file contains the interface for the QSPI FLASH functionality
 *
 * <pre>
 * MODIFICATION HISTORY:
 *
 * Ver	Who	Date		Changes
 * ----- ---- -------- -------------------------------------------------------
-* 1.00a ecm	02/10/10 Initial release
-* 2.00a mb  16/08/12 Added the macros and function prototypes
+* 1.00a ecm	01/10/10 Initial release
+* 3.00a mb  01/09/12 Added the Delay Values defines for qspi
+* 5.00a sgd	05/17/13 Added Flash Size > 128Mbit support
+* 					 Dual Stack support
 * </pre>
 *
 * @note
 *
 ******************************************************************************/
-#ifndef ___PCAP_H___
-#define ___PCAP_H___
+#ifndef ___QSPI_H___
+#define ___QSPI_H___
 
-
+#include "fsbl.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /***************************** Include Files *********************************/
-#include "xdevcfg.h"
+#include "fsbl.h"
+
+/************************** Constant Definitions *****************************/
+#define SINGLE_FLASH_CONNECTION			0
+#define DUAL_STACK_CONNECTION			1
+#define DUAL_PARALLEL_CONNECTION		2
+#define FLASH_SIZE_16MB					0x1000000
+
+/*
+ * Bank mask
+ */
+#define BANKMASK 0xF000000
+
+/*
+ * Identification of Flash
+ * Micron:
+ * Byte 0 is Manufacturer ID;
+ * Byte 1 is first byte of Device ID - 0xBB or 0xBA
+ * Byte 2 is second byte of Device ID describes flash size:
+ * 128Mbit : 0x18; 256Mbit : 0x19; 512Mbit : 0x20
+ * Spansion:
+ * Byte 0 is Manufacturer ID;
+ * Byte 1 is Device ID - Memory Interface type - 0x20 or 0x02
+ * Byte 2 is second byte of Device ID describes flash size:
+ * 128Mbit : 0x18; 256Mbit : 0x19; 512Mbit : 0x20
+ */
+
+#define MICRON_ID		0x20
+#define SPANSION_ID		0x01
+#define WINBOND_ID		0xEF
+
+#define FLASH_SIZE_ID_128M		0x18
+#define FLASH_SIZE_ID_256M		0x19
+#define FLASH_SIZE_ID_512M		0x20
+#define FLASH_SIZE_ID_1G		0x21
+
+/*
+ * Size in bytes
+ */
+#define FLASH_SIZE_128M			0x1000000
+#define FLASH_SIZE_256M			0x2000000
+#define FLASH_SIZE_512M			0x4000000
+#define FLASH_SIZE_1G			0x8000000
 
 /************************** Function Prototypes ******************************/
+u32 InitQspi(void);
 
+u32 QspiAccess( u32 SourceAddress,
+		u32 DestinationAddress,
+		u32 LengthBytes);
 
-/* Multiboot register offset mask */
-#define PCAP_MBOOT_REG_REBOOT_OFFSET_MASK	0x1FFF
-#define PCAP_CTRL_PCFG_AES_FUSE_EFUSE_MASK	0x1000
-
-#define PCAP_LAST_TRANSFER 1
-#define MAX_COUNT 1000000000
-#define LVL_PL_PS 0x0000000F
-#define LVL_PS_PL 0x0000000A
-
-/* Fix for #672779 */
-#define FSBL_XDCFG_IXR_ERROR_FLAGS_MASK		(XDCFG_IXR_AXI_WERR_MASK | \
-						XDCFG_IXR_AXI_RTO_MASK |  \
-						XDCFG_IXR_AXI_RERR_MASK | \
-						XDCFG_IXR_RX_FIFO_OV_MASK | \
-						XDCFG_IXR_DMA_CMD_ERR_MASK |\
-						XDCFG_IXR_DMA_Q_OV_MASK |   \
-						XDCFG_IXR_P2D_LEN_ERR_MASK |\
-						XDCFG_IXR_PCFG_HMAC_ERR_MASK)
-
-int InitPcap(void);
-void PcapDumpRegisters(void);
-u32 ClearPcapStatus(void);
-void FabricInit(void);
-int XDcfgPollDone(u32 MaskValue, u32 MaxCount);
-u32 PcapLoadPartition(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
-		 	u32 DestinationLength, u32 Flags);
-u32 PcapDataTransfer(u32 *SourceData, u32 *DestinationData, u32 SourceLength,
- 			u32 DestinationLength, u32 Flags);
+u32 FlashReadID(void);
+u32 SendBankSelect(u8 BankSel);
+u32 QSpi_set_quad_mode();
 
 /************************** Variable Definitions *****************************/
+
+
 #ifdef __cplusplus
 }
 #endif
 
 
-#endif /* ___PCAP_H___ */
+#endif /* ___QSPI_H___ */
 

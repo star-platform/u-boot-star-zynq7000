@@ -158,10 +158,10 @@ int IicPsMasterPolled_Write(u8 dev_id, u8 waddr, u8 wdata)
 
 	int Status;
     u8 WriteBuffer[2];              /* Write buffer for writing register. */
-
+    
 	WriteBuffer[0]=waddr;
 	WriteBuffer[1]=wdata;
-
+    
 	/*
 	 * Send the buffer using the IIC and ignore the number of bytes sent
 	 * as the return value since we are using it in interrupt mode.
@@ -171,7 +171,7 @@ int IicPsMasterPolled_Write(u8 dev_id, u8 waddr, u8 wdata)
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
-
+    
 	/*
 	 * Wait until bus is idle to start another transfer.
 	 */

@@ -273,21 +273,21 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 			addr = 0;
 		blk = simple_strtoul(argv[idx], NULL, 16);
 		cnt = simple_strtoul(argv[idx + 1], NULL, 16);
-
+        
 		if (!mmc) {
 			printf("no mmc device at slot %x\n", curr_device);
 			return 1;
 		}
-
-		printf("\nMMC %s: dev # %d, block # %d, count %d ... ",
-				argv[1], curr_device, blk, cnt);
-
+        
+		printf("\nMMC %s: dev # %d, , addr # 0x%x, block # %d, count %d ... \n",
+				argv[1], curr_device, addr, blk, cnt);
+        
 		mmc_init(mmc);
 
 		switch (state) {
 		case MMC_READ:
 			n = mmc->block_dev.block_read(curr_device, blk,
-						      cnt, addr);
+						      cnt, addr);   /* mmc_bread */
 			/* flush cache after read */
 			flush_cache((ulong)addr, cnt * 512); /* FIXME */
 			break;
@@ -301,7 +301,7 @@ int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		default:
 			BUG();
 		}
-
+        
 		printf("%d blocks %s: %s\n",
 				n, argv[1], (n == cnt) ? "OK" : "ERROR");
 		return (n == cnt) ? 0 : 1;

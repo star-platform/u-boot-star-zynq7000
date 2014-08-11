@@ -387,7 +387,7 @@ int si9134_i2c_init(void)
     u8 data[8];
 	int i=0;
     i2c_read(ZC702_HDMI_ADDR1,0,0,data,8); 
-    #if 0
+    #if 1
 	for(i = 0;i < 8;i++)
 	{
         printf("%x ",data[i]);
@@ -403,9 +403,8 @@ int si9134_i2c_init(void)
 
 	memset(data,0,8);
     i2c_read(ZC702_HDMI_ADDR1,0,0,data,8);  
-    
-
-    #if 0
+        
+    #if 1
 	printf("i2c configure si9134 done!\n\r");
             
 	for(i = 0;i < 8;i++)
