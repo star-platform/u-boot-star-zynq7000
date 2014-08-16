@@ -304,7 +304,7 @@ int Xgmac_init(struct eth_device *dev, bd_t * bis)
 	
 	if (ethstate.initialized)
 		return 1;
-
+    
 	/*
 	 * Setup the ethernet.
 	 */

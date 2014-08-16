@@ -40,6 +40,26 @@
 #include <malloc.h>
 
 
+#define ULPI_VIEW_WAKEUP	(1 << 31)
+#define ULPI_VIEW_RUN		(1 << 30)
+#define ULPI_VIEW_WRITE		(1 << 29)
+#define ULPI_VIEW_READ		(0 << 29)
+#define ULPI_VIEW_ADDR(x)	(((x) & 0xff) << 16)
+#define ULPI_VIEW_DATA_READ(x)	(((x) >> 8) & 0xff)
+#define ULPI_VIEW_DATA_WRITE(x)	((x) & 0xff)
+
+#define ULPI_VIEWPORT		0x170
+
+#define	ETIMEDOUT	110
+
+#define ULPI_PRODUCT_ID_HIGH			0x03
+
+#define ULPI_USB3320_VENDOR_ID          0x424
+#define ULPI_USB3320_PRODUCT_ID         0x7
+
+
+#define writel_ulpi(b,addr) (void)((*(volatile unsigned int *)(addr)) = (b))
+
 static XUsbPs UsbInstance;	/* The instance of the USB Controller */
 u8 Buffer[65535];
 
@@ -97,7 +117,7 @@ void usb_phy_init()
 	memset(&Buffer[0],0,65535);
 	Xil_DCacheFlushRange((unsigned int)&Buffer,65535);
 
-
+    
 	DeviceConfig.DMAMemVirt = (u32) MemPtr;
 	DeviceConfig.DMAMemPhys = (u32) MemPtr;
 
@@ -121,5 +141,78 @@ void usb_phy_init()
 
 
 
+static int readl_ulpi(const volatile int addr)
+{
+	return *(const volatile int *) addr;
+}
 
 
+static int ulpi_viewport_wait(u32 view, u32 mask)
+{
+	unsigned long usec = 200;
+
+	while (usec--) {
+		if (!(readl_ulpi(view) & mask))
+			return 0;
+
+		udelay(1000);
+	};
+    
+	return -ETIMEDOUT;
+}
+
+
+static int ulpi_viewport_read(u32 reg)
+{
+	int ret;
+	u32 view_port = 0xe0002000 + ULPI_VIEWPORT;
+	printf("view_port:0x%x\n\r", view_port);
+	writel_ulpi(ULPI_VIEW_WAKEUP | ULPI_VIEW_WRITE, view_port);
+
+	printf("view_port=0x%x\n",readl_ulpi(view_port));
+	ret = ulpi_viewport_wait(view_port, ULPI_VIEW_WAKEUP);
+	if (ret)
+		return ret;
+
+	writel_ulpi(ULPI_VIEW_RUN | ULPI_VIEW_READ | ULPI_VIEW_ADDR(reg), view_port);
+	printf("view_port=0x%x\n",readl_ulpi(view_port));
+	
+	ret = ulpi_viewport_wait(view_port, ULPI_VIEW_RUN);
+	if (ret)
+		return ret;
+    
+	return ULPI_VIEW_DATA_READ(readl_ulpi(view_port));
+
+}
+
+
+int ulpi_phy_init()
+{
+	u32 i = 0;
+	u32 ulpi_id = 0;
+	int vid, pid, ret;
+    
+    printf("ulpi_phy_init...\n\r");
+    
+	for (i = 0; i < 4; i++)
+	{
+		ret = ulpi_viewport_read(ULPI_PRODUCT_ID_HIGH - i);
+        printf("ret:0x%x\n", ret);
+		if (ret < 0)
+			return ret;
+		ulpi_id = (ulpi_id << 8) | ret;
+	}
+	vid = ulpi_id & 0xffff;
+	pid = ulpi_id >> 16;
+    
+	printf("ULPI transceiver vendor/product ID 0x%04x/0x%04x\n", vid, pid);
+
+    if ((vid == ULPI_USB3320_VENDOR_ID) && (pid == ULPI_USB3320_PRODUCT_ID))
+    {
+        printf("ulpi phy read successfully\r\n");
+    }
+    
+    return 0;
+}
+
+/*****************************/

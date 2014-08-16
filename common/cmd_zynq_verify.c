@@ -62,6 +62,9 @@ enum {
     PS_GPIO_TEST = 1,
 	PS_MEMORY_TEST,
 	PS_SD_TEST,
+	PS_QSPI_TEST,
+	PS_USB_TEST,
+	PS_GMAC_TEST,
     SCU_GIC_SELF_TEST,
     SCU_GIC_INT_SETUP,
     /* EMAC_PS_INT_TEST */
@@ -89,21 +92,21 @@ char *opnum2opstr(int op_num)
 	case PS_GPIO_TEST:
 		strncpy(tmp_op, "PS_GPIO_LED_test", 100);
 		break;
-        
 	case PS_MEMORY_TEST:
 		strncpy(tmp_op, "PS_Memory_test", 100);
 		break;
     case PS_SD_TEST:
 		strncpy(tmp_op, "PS_SD_test", 100);
+        break;    
+    case PS_QSPI_TEST:
+		strncpy(tmp_op, "PS_QSPI_test", 100);
         break;
-    case SCU_GIC_SELF_TEST:
-		strncpy(tmp_op, "Scu_GIC_self_test", 100);
+    case PS_USB_TEST:
+		strncpy(tmp_op, "PS_USB_test", 100);
         break;
-        
-    case SCU_GIC_INT_SETUP:
-		strncpy(tmp_op, "Scu_GIC_INT_Setup", 100);
+    case PS_GMAC_TEST:
+        strncpy(tmp_op, "PS_GMAC_test", 100);
         break;
-        
     case IIC0_PS_SELF_TEST:        
 		strncpy(tmp_op, "I2C0_self_test", 100);
         break;
@@ -219,12 +222,12 @@ int zynq_ps_gpio_led_test()
     {
         /* Set the GPIO output to be hign, led off */
         XGpioPs_WritePin(&Gpio, 0, 0x1);
-        udelay(1000000);
+        mdelay(500);
         /* Set the GPIO output to be hign, led on */
         XGpioPs_WritePin(&Gpio, 0, 0x0);
         /* delay 1s */
         printf("GPIO LED On %i times\r\n", i+1);
-        udelay(1000000);
+        mdelay(500);
     }
 #if 0
     /*
@@ -256,6 +259,7 @@ int zynq_ps_memory_test()
 
     for (i = 0; i < n_memory_ranges; i++) 
     {
+        mdelay(1000);
         test_memory_range(&memory_ranges[i]);
     }
     
@@ -285,6 +289,144 @@ int zynq_ps_sd_test()
     
     return 0;
 }
+
+
+
+int zynq_ps_qspi_test()
+{
+    int Status;
+    int argc;
+    int i;
+    int ddr_wr_baseaddr = 0x00200000;
+    int ddr_rd_baseaddr = 0x00300000;
+    
+	static const char *const arg_probe[] = { "probe", "0", "0", "0"};
+	static const char *const arg_erase[] = { "erase", "0x01FFF000", "0x001000"};
+	static const char *const arg_write[] = { "write", "0x00200000", "0x01FFF000", "0x001000"};
+	static const char *const arg_read[] = { "read", "0x00300000", "0x01FFF000", "0x001000"};
+    
+    printf("---Starting QSPI Test Application---\n\r");
+    
+    argc = 4;    
+    /* probe 0 0 0 */
+    Status = spi_op(argc, arg_probe);   
+    if (Status == 0) 
+    {
+        printf("---QSPI Probe Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---QSPI Probe Test Application Failed---\n\r\r\n");
+    }
+    /* probe erase 0x01FFF000 0x001000  erase the last 1KB */
+    argc = 3;
+    Status = spi_op(argc, arg_erase);   
+    if (Status == 0) 
+    {
+        printf("---QSPI Erase Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---QSPI Erase Test Application Failed---\n\r\r\n");
+    }
+    
+    /* sf write 0x00200000 0x01FFF000 0x001000 */
+    
+    for (i = 0; i < 0x1000; i++) 
+    {
+        Xil_Out32((ddr_wr_baseaddr+(i*4)), (i+1));
+    }
+    argc = 4;
+    Status = spi_op(argc, arg_write);   
+    if (Status == 0) 
+    {
+        printf("---QSPI Write Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---QSPI Write Test Application Failed---\n\r\r\n");
+    }
+    
+    /* sf read 0x00300000 0x01FFF000 0x001000 */
+    argc = 4;
+    Status = spi_op(argc, arg_read);   
+    if (Status == 0)
+    {
+        printf("---QSPI Read Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---QSPI Read Test Application Failed---\n\r\r\n");
+    }
+    if (memcmp(ddr_wr_baseaddr, ddr_rd_baseaddr, 0x1000) == 0) 
+    {
+        printf("---QSPI Test Complete---\n\r\r\n");
+    }
+    else
+    {
+        printf("---QSPI Test Failed ---\n\r\r\n");
+    }
+    return 0;
+}
+
+
+int zynq_ps_usb_test()
+{
+    int Status;
+
+    printf("---Starting USB Test Application---\n\r");
+    Status = ulpi_phy_init();
+    if (Status == 0) 
+    {
+        printf("---USB Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---USB Test Application Failed---\n\r\r\n");
+    }
+    return 0;
+}
+
+int zynq_ps_Gmac_test()
+{
+    int Status;
+    char *server_ip;
+    printf("---Starting GMAC Test Application---\n\r");
+    Status = Xgmac_init(NULL, NULL);
+    if (Status == 0 || Status == 1) 
+    {
+        printf("---GMAC Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---GMAC Test Application Failed, status:%d---\n\r\r\n", Status);
+    }
+    
+    printf("---Starting Ethernet Test Application---\n\r");
+    /* ping to check the ethernet */
+    if ((server_ip= getenv ("serverip")) == NULL) {
+        printf("###set serverip first\r\n");
+        return -1;
+    }
+    else
+    {
+        printf("serverip:%s\r\n", server_ip);
+        NetPingIP = string_to_ip(server_ip);
+        if (NetPingIP == 0)
+            return CMD_RET_USAGE;
+        
+        if (NetLoop(PING) < 0) {
+            printf("ping failed; host %s is not alive\r\n\r\n", server_ip);
+            return -1;
+        }       
+        printf("host %s is alive\r\n\r\n", server_ip);
+    }
+    return 0;
+}
+
+
+
+
 
 int ScuGicSelfTest()
 {
@@ -535,6 +677,15 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     case PS_SD_TEST:
         zynq_ps_sd_test();
         break;
+    case PS_QSPI_TEST:
+        zynq_ps_qspi_test();
+        break;
+    case PS_USB_TEST:
+        zynq_ps_usb_test();
+        break;
+    case PS_GMAC_TEST:
+        zynq_ps_Gmac_test();
+        break;
     case SCU_GIC_SELF_TEST:
         ScuGicSelfTest();
     case SCU_GIC_INT_SETUP:
@@ -592,8 +743,9 @@ U_BOOT_CMD (zynq_verify, 3, 1, do_zynq_verify,
 	"  1\t  PS GPIO LED test\n"
 	"  2\t  PS Memory test\n"
 	"  3\t  PS SD test\n"
-	"  4\t  Scu GIC self test\n"
-	"  4\t  Scu GIC int setup\n"
+	"  4\t  PS QSPI test\n"
+	"  5\t  PS USB test\n"
+	"  6\t  PS GMAC test\n"
 	"  5\t  I2C0 test\n"
 	"  6\t  I2C1 test\n"
 	"  7\t  QSPI test\n"

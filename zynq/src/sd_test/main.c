@@ -397,8 +397,8 @@ int main(void)
 
 	if (BootModeRegister == QSPI_MODE) {
 		fsbl_printf(DEBUG_GENERAL,"Boot mode is QSPI\n\r");
-		InitQspi();
-		MoveImage = QspiAccess;
+		/*InitQspi();
+		MoveImage = QspiAccess;*/
 		fsbl_printf(DEBUG_INFO,"QSPI Init Done \r\n");
 	} else
 #endif
@@ -521,7 +521,7 @@ int main(void)
 	SystemInitFlag = 1;
 
 
-	/* add by star */
+	/* add by star-star */
 	{
 		u32 MultiBootReg;
 		
@@ -542,7 +542,7 @@ int main(void)
 		
 		fsbl_printf(DEBUG_INFO,"After set, Multiboot Register: 0x%08x\r\n",MultiBootReg);
 
-		QSpi_set_quad_mode();
+		// QSpi_set_quad_mode();
 	}
 	
 	/*
@@ -1407,7 +1407,7 @@ u32 NextValidImageCheck(void)
 	 */
 #ifdef XPAR_PS7_QSPI_LINEAR_0_S_AXI_BASEADDR
 	if (FlashReadBaseAddress == XPS_QSPI_LINEAR_BASEADDR) {
-		BootDevMaxSize = QspiFlashSize;
+		// BootDevMaxSize = QspiFlashSize;
 	}
 #endif
 

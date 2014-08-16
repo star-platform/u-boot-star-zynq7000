@@ -71,7 +71,7 @@
 /************************** Function Prototypes ******************************/
 
 /************************** Variable Definitions *****************************/
-
+#if 0
 extern XQspiPs_Config XQspiPs_ConfigTable[];
 
 /*****************************************************************************/
@@ -104,3 +104,4 @@ XQspiPs_Config *XQspiPs_LookupConfig(u16 DeviceId)
 	}
 	return CfgPtr;
 }
+#endif

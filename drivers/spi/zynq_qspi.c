@@ -36,6 +36,8 @@
 #include <spi.h>
 
 #include "zynq_qspi.h"
+#include "xqspips_hw.h"
+#include "xqspips.h"
 
 #define DEBUG
 #define DEBUG_REG
@@ -100,6 +102,21 @@ typedef enum irqreturn irqreturn_t;
  * Name of this driver
  */
 #define DRIVER_NAME			"Xilinx_PSS_QSPI"
+typedef struct {
+	u32 Option;
+	u32 Mask;
+} OptionsMap;
+
+static OptionsMap OptionsTable[] = {
+	{XQSPIPS_CLK_ACTIVE_LOW_OPTION, XQSPIPS_CR_CPOL_MASK},
+	{XQSPIPS_CLK_PHASE_1_OPTION, XQSPIPS_CR_CPHA_MASK},
+	{XQSPIPS_FORCE_SSELECT_OPTION, XQSPIPS_CR_SSFORCE_MASK},
+	{XQSPIPS_MANUAL_START_OPTION, XQSPIPS_CR_MANSTRTEN_MASK},
+	{XQSPIPS_HOLD_B_DRIVE_OPTION, XQSPIPS_CR_HOLD_B_MASK},
+};
+
+
+#define XQSPIPS_NUM_OPTIONS	(sizeof(OptionsTable) / sizeof(OptionsMap))
 
 /*
  * Register offset definitions
@@ -326,11 +343,129 @@ static struct xqspips_inst_format __devinitdata flash_inst[] = {
 void xqspips_init_hw(void __iomem *regs_base, unsigned int is_dual)
 {
 	u32 config_reg;
+	u32 Options;
+	u32 QspiOptions;	
+	unsigned int Index;
+	u8 Prescaler;
+	/* XQspiPs_CfgInitialize */
+	/* -------------------------------------------------------------*/
 
+	/* XQspiPs_Disable */
+	xqspips_write(regs_base + XQSPIPSS_ENABLE_OFFSET, 0);
+	
+	/* De-assert slave select lines.
+	 */
+	config_reg = xqspips_read(regs_base + XQSPIPSS_CONFIG_OFFSET);	
+	config_reg |= (XQSPIPS_CR_SSCTRL_MASK | XQSPIPS_CR_SSFORCE_MASK);
+	xqspips_write(regs_base + XQSPIPSS_CONFIG_OFFSET, config_reg);
+	
+	
+	/*
+	 * Set the RX and TX FIFO threshold to reset value (one)
+	 */
+	xqspips_write(regs_base + XQSPIPSS_RX_THRESH_OFFSET, XQSPIPS_RXWR_RESET_VALUE);
+	xqspips_write(regs_base + XQSPIPSS_TX_THRESH_OFFSET, XQSPIPS_TXWR_RESET_VALUE);
+
+	/* Clear the RX FIFO and drop any data */
+	while (xqspips_read(regs_base + XQSPIPSS_STATUS_OFFSET) &
+			XQSPIPSS_IXR_RXNEMTY_MASK)
+		xqspips_read(regs_base + XQSPIPSS_RXD_OFFSET);
+
+	/*
+	 * Reset any values that are not reset by the hardware reset such that
+	 * the software state matches the hardware device
+	 */	 
+	xqspips_write(regs_base + XQSPIPSS_CONFIG_OFFSET, XQSPIPS_CR_RESET_STATE);
+
+	/* ---------------------------------------------------------------------  */
+
+	/*  Set Manual Chip select options and drive HOLD_B pin high. */
+	/* -------------------------------------------------------------*/
+	Options = XQSPIPS_FORCE_SSELECT_OPTION | XQSPIPS_HOLD_B_DRIVE_OPTION;
+	QspiOptions = Options & XQSPIPS_LQSPI_MODE_OPTION;
+	Options &= ~XQSPIPS_LQSPI_MODE_OPTION;
+	
+	config_reg = xqspips_read(regs_base + XQSPIPSS_CONFIG_OFFSET);	
+	
+	/*
+	 * Loop through the options table, turning the option on or off
+	 * depending on whether the bit is set in the incoming options flag.
+	 */
+	for (Index = 0; Index < XQSPIPS_NUM_OPTIONS; Index++) {
+		if (Options & OptionsTable[Index].Option) {
+			/* Turn it on */
+			config_reg |= OptionsTable[Index].Mask;
+		} else {
+			/* Turn it off */
+			config_reg &= ~(OptionsTable[Index].Mask);
+		}
+	}
+	
+	/*
+	 * Now write the control register. Leave it to the upper layers
+	 * to restart the device.
+	 */	
+	xqspips_write(regs_base + XQSPIPSS_CONFIG_OFFSET, config_reg);
+
+
+
+	/*
+	 * Check for the LQSPI configuration options.
+	 */
+	config_reg = xqspips_read(regs_base + XQSPIPSS_LINEAR_CFG_OFFSET);	
+
+	if (QspiOptions & XQSPIPS_LQSPI_MODE_OPTION) {
+
+		xqspips_write(regs_base + XQSPIPSS_LINEAR_CFG_OFFSET, XQSPIPS_LQSPI_CR_RST_STATE);
+		
+		/*
+		 * Select the slave
+		 */
+		config_reg = xqspips_read(regs_base + XQSPIPSS_CONFIG_OFFSET);	
+		
+		config_reg &= ~XQSPIPS_CR_SSCTRL_MASK;
+		xqspips_write(regs_base + XQSPIPSS_CONFIG_OFFSET, config_reg);		
+	} else {
+			
+		config_reg &= ~XQSPIPS_LQSPI_CR_LINEAR_MASK;
+		xqspips_write(regs_base + XQSPIPSS_LINEAR_CFG_OFFSET, config_reg);
+			
+	}
+	
+	/* ---------------------------------------------------------------------  */
+
+	/*Set the prescaler for QSPI clock */
+	/* -------------------------------------------------------------*/
+	Prescaler = XQSPIPS_CLK_PRESCALE_8;
+
+	
+	config_reg = xqspips_read(regs_base + XQSPIPSS_CONFIG_OFFSET);	
+
+	config_reg &= ~XQSPIPS_CR_PRESC_MASK;
+	config_reg |= (u32) (Prescaler & XQSPIPS_CR_PRESC_MAXIMUM) <<
+			    XQSPIPS_CR_PRESC_SHIFT;
+
+	xqspips_write(regs_base + XQSPIPSS_CONFIG_OFFSET, config_reg);
+	
+	/* ---------------------------------------------------------------------  */
+
+	
+	/*
+	 * Assert the FLASH chip select.
+	 */	 
+	/* ---------------------------------------------------------------------  */
+	config_reg = xqspips_read(regs_base + XQSPIPSS_CONFIG_OFFSET);	
+	
+	config_reg &= ~XQSPIPS_CR_SSCTRL_MASK;
+	xqspips_write(regs_base + XQSPIPSS_CONFIG_OFFSET, config_reg);		
+	/* ---------------------------------------------------------------------  */
+
+
+#if 0
 	xqspips_write(regs_base + XQSPIPSS_ENABLE_OFFSET,
 		~XQSPIPSS_ENABLE_ENABLE_MASK);
 	xqspips_write(regs_base + XQSPIPSS_IDIS_OFFSET, 0x7F);
-
+	
 	/* Disable linear mode as the boot loader may have used it */
 	xqspips_write(regs_base + XQSPIPSS_LINEAR_CFG_OFFSET, 0);
 
@@ -352,6 +487,8 @@ void xqspips_init_hw(void __iomem *regs_base, unsigned int is_dual)
 
 	xqspips_write(regs_base + XQSPIPSS_ENABLE_OFFSET,
 			XQSPIPSS_ENABLE_ENABLE_MASK);
+#endif
+
 }
 
 /**

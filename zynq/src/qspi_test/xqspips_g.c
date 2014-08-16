@@ -18,7 +18,7 @@
 /*
 * The configuration table for devices
 */
-
+#if 0
 XQspiPs_Config XQspiPs_ConfigTable[] =
 {
 	{
@@ -28,5 +28,5 @@ XQspiPs_Config XQspiPs_ConfigTable[] =
 		XPAR_PS7_QSPI_0_QSPI_MODE
 	}
 };
-
+#endif
 

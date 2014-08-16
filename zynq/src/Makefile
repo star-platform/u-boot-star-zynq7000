@@ -83,9 +83,9 @@ COBJS-y += usb_test/xusbps.o
 COBJS-y += usb_test/zynq_usb.o
 
 COBJS-y += qspi_test/xqspips_selftest_example.o
-COBJS-y += qspi_test/xqspips_sinit.o
+#COBJS-y += qspi_test/xqspips_sinit.o
 COBJS-y += qspi_test/xqspips.o
-COBJS-y += qspi_test/xqspips_g.o
+#COBJS-y += qspi_test/xqspips_g.o
 COBJS-y += qspi_test/xqspips_hw.o
 COBJS-y += qspi_test/xqspips_options.o
 COBJS-y += qspi_test/xqspips_selftest.o
@@ -113,7 +113,7 @@ COBJS-y += sd_test/mmc.o
 COBJS-y += sd_test/fsbl_hooks.o
 COBJS-y += sd_test/image_mover.o
 COBJS-y += sd_test/nor.o
-COBJS-y += sd_test/qspi.o
+#COBJS-y += sd_test/qspi.o
 COBJS-y += sd_test/ps7_init.o
 
 COBJS-y += oled_test/zynq_oled.o

@@ -161,8 +161,10 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 	pspi->qspi.chip_select = 0;
 	pspi->qspi.bits_per_word = 32;
 	xqspips_setup_transfer(&pspi->qspi, NULL);
-
+	
+#if 0
 	spi_enable_quad_bit(&pspi->slave);
+#endif
 
 	return &pspi->slave;
 }

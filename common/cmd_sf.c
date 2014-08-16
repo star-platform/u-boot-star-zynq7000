@@ -101,13 +101,16 @@ static int do_spi_flash_probe(int argc, char * const argv[])
 		if (*argv[3] == 0 || *endp != 0)
 			return -1;
 	}
-
+    
+    printf("do_spi_flash_probe(), bus:0x%x, cs:0x%x, speed:0x%x, mode:0x%x\r\n", 
+        bus, cs, speed, mode);
+    
 	new = spi_flash_probe(bus, cs, speed, mode);
 	if (!new) {
 		printf("Failed to initialize SPI flash at %u:%u\n", bus, cs);
 		return 1;
 	}
-
+    
 	if (flash)
 		spi_flash_free(flash);
 	flash = new;
@@ -200,7 +203,7 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 
 	if (argc < 4)
 		return -1;
-
+    
 	addr = simple_strtoul(argv[1], &endp, 16);
 	if (*argv[1] == 0 || *endp != 0)
 		return -1;
@@ -210,7 +213,7 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 	len = simple_strtoul(argv[3], &endp, 16);
 	if (*argv[3] == 0 || *endp != 0)
 		return -1;
-
+    
 	buf = map_physmem(addr, len, MAP_WRBACK);
 	if (!buf) {
 		puts("Failed to map physical memory\n");
@@ -286,7 +289,7 @@ static int do_spi_flash_erase(int argc, char * const argv[])
 	ret = sf_parse_len_arg(argv[2], &len);
 	if (ret != 1)
 		return -1;
-
+    
 	ret = spi_flash_erase(flash, offset, len);
 	if (ret) {
 		printf("SPI flash %s failed\n", argv[0]);
@@ -295,6 +298,39 @@ static int do_spi_flash_erase(int argc, char * const argv[])
 
 	return 0;
 }
+
+
+int spi_op(int argc, char * const argv[])
+{
+    const char *op_cmd;
+    int ret;
+    
+    op_cmd = argv[0];
+	if (strcmp(op_cmd, "probe") == 0) 
+    {
+		ret = do_spi_flash_probe(argc, argv);
+		goto done;
+	}
+    /* The remaining commands require a selected device */
+    if (!flash) {
+        puts("No SPI flash selected. Please run `sf probe'\n");
+        return 1;
+    }
+    
+    if (strcmp(op_cmd, "read") == 0 || strcmp(op_cmd, "write") == 0 ||
+        strcmp(op_cmd, "update") == 0)
+        ret = do_spi_flash_read_write(argc, argv);
+    else if (strcmp(op_cmd, "erase") == 0)
+        ret = do_spi_flash_erase(argc, argv);
+    else
+        ret = -1;
+    
+done:
+    if (ret != -1)
+        return ret;
+    
+}
+
 
 static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {
@@ -308,18 +344,21 @@ static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[
 	cmd = argv[1];
 	--argc;
 	++argv;
-
+    
+    printf("argc:%d, argv0:%s, argv1:%s\r\n", argc, argv[0], argv[1]);
+    /* sf read  0x00200000 0 0x00050000 */
+    /* now: argc:4; argv[0]:read argv[1]:0x00200000 argv[2]:0 argv[3]:0x00050000 */
 	if (strcmp(cmd, "probe") == 0) {
 		ret = do_spi_flash_probe(argc, argv);
 		goto done;
 	}
-
+    
 	/* The remaining commands require a selected device */
 	if (!flash) {
 		puts("No SPI flash selected. Please run `sf probe'\n");
 		return 1;
 	}
-
+    
 	if (strcmp(cmd, "read") == 0 || strcmp(cmd, "write") == 0 ||
 	    strcmp(cmd, "update") == 0)
 		ret = do_spi_flash_read_write(argc, argv);

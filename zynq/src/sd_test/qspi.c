@@ -720,7 +720,7 @@ u32 SendBankSelect(u8 BankSel)
 		fsbl_printf(DEBUG_INFO, "BankSel %d != Register Read %d\n\r", BankSel,
 				ReadBuffer[1]);
 		return XST_FAILURE;
-		/* modify by star */
+		/* modify by star-star */
 		/* return XST_SUCCESS; */
 	}
 

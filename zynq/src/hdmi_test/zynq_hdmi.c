@@ -110,7 +110,7 @@ int HDMI_init( void )
 
     
     si9134_i2c_init();
-
+    
     /*for logicvc,*/
     ddr_video_wr();
         

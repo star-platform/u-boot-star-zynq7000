@@ -99,12 +99,13 @@ static const struct winbond_spi_flash_params winbond_spi_flash_table[] = {
 		.nr_blocks		= 256,
 		.name			= "W25Q128",
 	},
+	/* add by star */
 	{
-		.id 		= 0x4019,
+		.id			= 0x4019,
 		.l2_page_size		= 8,
 		.pages_per_sector	= 16,
 		.sectors_per_block	= 16,
-		.nr_blocks		= 512,
+		.nr_blocks		= 256,
 		.name			= "W25Q256",
 	},
 	{
@@ -117,6 +118,8 @@ static const struct winbond_spi_flash_params winbond_spi_flash_table[] = {
 	},
 };
 
+
+
 static int winbond_erase(struct spi_flash *flash, u32 offset, size_t len)
 {
 	return spi_flash_cmd_erase(flash, CMD_W25_SE, offset, len);
@@ -128,22 +131,22 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 	struct spi_flash *flash;
 	unsigned int i;
 	unsigned page_size;
-
+	/* idcode[1]: 0x40  idcode[2]:0x19 */
 	for (i = 0; i < ARRAY_SIZE(winbond_spi_flash_table); i++) {
 		params = &winbond_spi_flash_table[i];
 		if (params->id == ((idcode[1] << 8) | idcode[2]))
 			break;
 	}
-
-		
+	
+	
 	if (i == ARRAY_SIZE(winbond_spi_flash_table)) {
 		debug("SF: Unsupported Winbond ID %02x%02x\n",
 				idcode[1], idcode[2]);
-		/* add by star-star */
+		/* add by star */
 		printf("SF: Unsupported Winbond ID %02x%02x\n", idcode[1], idcode[2]);
 		return NULL;
 	}
-	/* add by star-star */
+	/* add by star */
 	printf("Winbond Flash found, id: 0x%x, name: %s\n", params->id, params->name);
 	
 	flash = malloc(sizeof(*flash));
@@ -154,10 +157,10 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 	
 	flash->spi = spi;
 	flash->name = params->name;
-
+        
 	/* Assuming power-of-two page size initially. */
 	page_size = 1 << params->l2_page_size;
-
+    
 	flash->write = spi_flash_cmd_write_multi;
 	flash->erase = winbond_erase;
 	flash->read = spi_flash_cmd_read_fast;
@@ -165,17 +168,21 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 	flash->sector_size = page_size * params->pages_per_sector;
 	
 	/* address width is 4 for dual and 3 for single qspi */
-	if (flash->spi->is_dual == 1) {
+	if (flash->spi->is_dual == 1) 
+    {
 		flash->addr_width = 4;
 		flash->size = page_size * params->pages_per_sector
 				* params->sectors_per_block
 				* (2 * params->nr_blocks);
-	} else if (flash->spi->is_dual == 0) {
+	} 
+    else if (flash->spi->is_dual == 0) 
+    {
 		flash->addr_width = 3;
+        /* 256*16*16*256 */
 		flash->size = page_size * params->pages_per_sector
 				* params->sectors_per_block
 				* params->nr_blocks;
+        
 	}
-
 	return flash;
 }

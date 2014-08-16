@@ -148,7 +148,7 @@ int XQspiPs_SetOptions(XQspiPs *InstancePtr, u32 Options)
 
 	ConfigReg = XQspiPs_ReadReg(InstancePtr->Config.BaseAddress,
 				      XQSPIPS_CR_OFFSET);
-
+	
 	/*
 	 * Loop through the options table, turning the option on or off
 	 * depending on whether the bit is set in the incoming options flag.

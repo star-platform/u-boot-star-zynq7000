@@ -39,8 +39,8 @@
 #define CONFIG_SYS_LONGHELP
 
 
-#define CONFIG_IPADDR   192.168.1.9
-#define CONFIG_SERVERIP 192.168.1.2
+#define CONFIG_IPADDR   192.168.1.253
+#define CONFIG_SERVERIP 192.168.1.9
 
 #define CONFIG_SYS_DCACHE_OFF   /*verify hdmi function*/
 #define CONFIG_SYS_ICACHE_OFF

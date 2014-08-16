@@ -130,6 +130,62 @@ typedef struct {
 
 #define ARRAY_SIZE(Array)		(sizeof(Array) / sizeof((Array)[0]))
 
+
+#define PAGE_SIZE		0x100
+
+
+#define COMMAND_OFFSET		0 /* FLASH instruction */
+#define ADDRESS_1_OFFSET	1 /* MSB byte of address to read or write */
+#define ADDRESS_2_OFFSET	2 /* Middle byte of address to read or write */
+#define ADDRESS_3_OFFSET	3 /* LSB byte of address to read or write */
+#define DATA_OFFSET			4 			/* Start of Data for Read/Write */
+#define DUMMY_SIZE			1 /* Number of dummy bytes for fast, dual and */
+#define RD_ID_SIZE			5 
+#define QSPI_DEVICE_ID		XPAR_XQSPIPS_0_DEVICE_ID
+
+
+#define WRITE_STATUS_CMD	0x01
+#define WRITE_CMD			0x02
+#define READ_CMD			0x03
+#define WRITE_DISABLE_CMD	0x04
+#define READ_STATUS_CMD		0x05
+#define WRITE_ENABLE_CMD	0x06
+#define FAST_READ_CMD		0x0B
+#define DUAL_READ_CMD		0x3B
+#define QUAD_READ_CMD		0x6B
+#define BULK_ERASE_CMD		0xC7
+#define	SEC_ERASE_CMD		0xD8
+#define READ_ID				0x9F
+
+#define BULK_ERASE_SIZE		1 /* Bulk Erase command size */
+#define SEC_ERASE_SIZE		4 /* Sector Erase command + Sector address */
+
+
+#define OVERHEAD_SIZE		4
+
+
+/* add by star */
+#define SECTOR_SIZE			0x10000
+#define NUM_SECTORS			0x200				/* 0x200 * 0x10000 = 0x2000000 32MB*/
+
+#define BOOT_IMAGE_SIZE  	0x300000 								
+#define BOOT_OFFSET	     	0x0												/* 0x0 - 0x300000 */
+
+#define LINUX_IMAGE_SIZE 	0x400000											
+#define LINUX_OFFSET	 	(BOOT_OFFSET + BOOT_IMAGE_SIZE + SECTOR_SIZE)	/* 0x310000 = 0x710000 */
+
+#define RAMDISK_IMAGE_SIZE  0x400000											
+#define RAMDISK_OFFSET     (LINUX_OFFSET + LINUX_IMAGE_SIZE + SECTOR_SIZE)	/* 0x720000 - 0xb20000 */
+
+#define DEVICETREE_SIZE     0x10000
+#define DEVICETREE_OFFSET  (RAMDISK_OFFSET + RAMDISK_IMAGE_SIZE + SECTOR_SIZE)	/* 0xb30000 - 0xb40000 */
+
+#define LINUX_IMAGE_ACTUAL_SIZE 0x2c4110
+
+extern int QspiFlashPolledExample(XQspiPs *QspiInstancePtr, u16 QspiDeviceId);
+
+
+
 /************************** Function Prototypes ******************************/
 static void XQspiPs_GetReadData(XQspiPs *InstancePtr, u32 Data, u8 Size);
 static void StubStatusHandler(void *CallBackRef, u32 StatusEvent,
@@ -169,6 +225,553 @@ static XQspiPsInstFormat FlashInst[] = {
 	{ XQSPIPS_FLASH_OPCODE_CLEAR_FLAG_SR, 1, XQSPIPS_TXD_01_OFFSET },
 	/* Add all the instructions supported by the flash device */
 };
+
+XQspiPs_Config XQspiPs_ConfigTable[] =
+{
+	{
+		XPAR_PS7_QSPI_0_DEVICE_ID,
+		XPAR_PS7_QSPI_0_BASEADDR,
+		XPAR_PS7_QSPI_0_QSPI_CLK_FREQ_HZ,
+		XPAR_PS7_QSPI_0_QSPI_MODE
+	}
+};
+
+XQspiPs QspiInstance;
+
+u8 ReadBuffer[PAGE_SIZE + DATA_OFFSET + DUMMY_SIZE];
+u8 WriteBuffer[PAGE_SIZE + DATA_OFFSET];
+
+
+int init_qspi()
+{
+	int Status;
+	u8 *BufferPtr;
+	u8 UniqueValue;
+	int Count;
+	int Page;
+	XQspiPs_Config *QspiConfig;
+	XQspiPs *QspiInstancePtr;
+	QspiInstancePtr = &QspiInstance;
+
+#if 0
+	Status = QspiFlashPolledExample(&QspiInstance, QSPI_DEVICE_ID);
+#endif
+
+#if 1	
+	/*
+	 * Initialize the QSPI driver so that it's ready to use
+	 */
+	QspiConfig = XQspiPs_LookupConfig(QSPI_DEVICE_ID);
+	if (NULL == QspiConfig) 
+	{
+		return XST_FAILURE;
+	}
+	
+	Status = XQspiPs_CfgInitialize(QspiInstancePtr, QspiConfig,
+					QspiConfig->BaseAddress);
+	if (Status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+
+
+	
+	/*
+	 * Perform a self-test to check hardware build
+	 */
+	Status = XQspiPs_SelfTest(QspiInstancePtr);
+	if (Status != XST_SUCCESS) {
+		return XST_FAILURE;
+	}
+
+	/*
+	 * Set Manual Start and Manual Chip select options and drive HOLD_B
+	 * pin high.
+	 */
+	XQspiPs_SetOptions(QspiInstancePtr, XQSPIPS_MANUAL_START_OPTION |
+			XQSPIPS_FORCE_SSELECT_OPTION |
+			XQSPIPS_HOLD_B_DRIVE_OPTION);
+
+
+	/*
+	 * Set the prescaler for QSPI clock
+	 */
+	XQspiPs_SetClkPrescaler(QspiInstancePtr, XQSPIPS_CLK_PRESCALE_8);
+
+	/*
+	 * Assert the FLASH chip select.
+	 */
+	XQspiPs_SetSlaveSelect(QspiInstancePtr);
+#endif	
+	return XST_SUCCESS;
+	
+}
+
+#if 1
+int read_qspi_id(u8 *pidcode)
+{
+	
+	XQspiPs *QspiInstancePtr = &QspiInstance;
+	/*
+	 * Read ID in Auto mode.
+	 */
+	WriteBuffer[COMMAND_OFFSET]   = READ_ID;
+	WriteBuffer[ADDRESS_1_OFFSET] = 0x23;		/* 3 dummy bytes */
+	WriteBuffer[ADDRESS_2_OFFSET] = 0x08;
+	WriteBuffer[ADDRESS_3_OFFSET] = 0x09;
+	FlashReadID(QspiInstancePtr, WriteBuffer, ReadBuffer, RD_ID_SIZE);
+	memcpy(pidcode, ReadBuffer, RD_ID_SIZE);
+	
+	return XST_SUCCESS;
+}
+
+int qspi_write(u32 offset, u32 len, void *buf, u32 page_size)
+{
+	u8 *pTempBuf;
+	u32 page_count, page;
+	u32 change_line = 0;
+	XQspiPs *QspiInstancePtr = &QspiInstance;
+	
+	page_count = len / page_size;
+	printf("Begin write data to QSPI Flash: \r\n");
+	for (page = 0; page < page_count; page++) 
+	{
+		pTempBuf = buf + (page * page_size);
+		memcpy(WriteBuffer + 4, pTempBuf, page_size);
+		FlashWrite(QspiInstancePtr, WriteBuffer, (page * page_size) + offset,
+			   page_size, WRITE_CMD);
+		if ((page+1) % 80 == 0)
+		{
+			printf(".");
+			change_line++;
+		}
+		if (change_line == 64)
+		{	
+			change_line = 0;
+			printf("\r\n");
+		}
+	}
+	printf("\r\n");
+	
+	/* test for write info */
+	#if 0
+	{
+		
+		u8 *BufferPtr;
+		int i;
+	    memset(ReadBuffer, 0x00, sizeof(ReadBuffer));
+	    memset(WriteBuffer, 0x00, sizeof(WriteBuffer));
+		printf("linux kernel image info:\r\n");
+		
+		FlashRead(QspiInstancePtr, WriteBuffer, ReadBuffer, 0x310000, PAGE_SIZE, DUAL_READ_CMD);		
+		BufferPtr = &ReadBuffer[DATA_OFFSET + DUMMY_SIZE];
+		for(i = 0; i < 48; i++)
+		{
+		   printf("%x ",BufferPtr[i]);
+		   if ((i+1)%16 == 0)
+			printf("\n");
+		}
+		printf("\n");
+		
+		memset(ReadBuffer, 0x00, sizeof(ReadBuffer));
+		FlashRead(QspiInstancePtr, WriteBuffer, ReadBuffer, 0x310000+LINUX_IMAGE_ACTUAL_SIZE-PAGE_SIZE, PAGE_SIZE, DUAL_READ_CMD);
+		BufferPtr = &ReadBuffer[DATA_OFFSET + DUMMY_SIZE];
+		for(i = 0; i < 48; i++)
+		{
+		   printf("%x ",BufferPtr[i]);
+		   if ((i+1)%16 == 0)
+			printf("\n");
+		}
+		printf("\n");
+	}
+	#endif
+	return XST_SUCCESS;
+}	
+
+
+
+int qspi_read(u32 offset, u32 len, void *buf, u32 page_size)
+{
+	u8 *pTempBuf;
+	u32 page_count, page;
+	u32 change_line = 0;
+	XQspiPs *QspiInstancePtr = &QspiInstance;
+	u8 *BufferPtr;
+	u32 i;
+	
+	page_count = len / page_size;
+	printf("Begin read data from QSPI Flash:  \r\n");
+	for (page = 0; page < page_count; page++) 
+	{
+		pTempBuf = buf + (page * page_size);
+	    memset(ReadBuffer, 0x00, sizeof(ReadBuffer));
+		FlashRead(QspiInstancePtr, WriteBuffer, ReadBuffer, (page * page_size) + offset, page_size, DUAL_READ_CMD);
+		BufferPtr = &ReadBuffer[DATA_OFFSET + DUMMY_SIZE];
+		memcpy(pTempBuf, BufferPtr, PAGE_SIZE);
+		
+		if ((page+1) % 100 == 0)
+		{
+			printf(".");
+			change_line++;
+		}
+		if (change_line == 64)
+		{	
+			change_line = 0;
+			printf("\r\n");
+		}
+		#if 0
+		/* testing for reading info */
+		if (page == 0 || page == (page_count -1))
+		{
+			for(i = 0; i < 48; i++)
+			{
+				printf("%x ",BufferPtr[i]);
+				if ((i+1)%16 == 0)
+				printf("\n");
+			}
+			printf("\n");
+		}
+		#endif
+	}
+	printf("\r\n");
+	
+	return XST_SUCCESS;
+}	
+
+
+int qspi_erase(u32 offset, u32 len)
+{
+	
+	XQspiPs *QspiInstancePtr = &QspiInstance;
+	FlashErase(QspiInstancePtr, WriteBuffer, offset, len);
+	
+	return XST_SUCCESS;
+}
+
+/******************************************************************************
+*
+* This function reads from the  serial FLASH connected to the
+* QSPI interface.
+*
+* @param	QspiPtr is a pointer to the QSPI driver component to use.
+* @param	Address contains the address to read data from in the FLASH.
+* @param	ByteCount contains the number of bytes to read.
+* @param	Command is the command used to read data from the flash. QSPI
+*		device supports one of the Read, Fast Read, Dual Read and Fast
+*		Read commands to read data from the flash.
+*
+* @return	None.
+*
+* @note		None.
+*
+******************************************************************************/
+void FlashRead(XQspiPs *QspiPtr, char *pWriteBuf, char *pReadBuf, u32 Address, u32 ByteCount, u8 Command)
+{
+	/*
+	 * Setup the write command with the specified address and data for the
+	 * FLASH
+	 */
+
+	*(pWriteBuf+COMMAND_OFFSET)  = Command;
+	*(pWriteBuf+ADDRESS_1_OFFSET) = (u8)((Address & 0xFF0000) >> 16);
+	*(pWriteBuf+ADDRESS_2_OFFSET) = (u8)((Address & 0xFF00) >> 8);
+	*(pWriteBuf+ADDRESS_3_OFFSET) = (u8)(Address & 0xFF);
+	
+	
+	
+	if ((Command == FAST_READ_CMD) || (Command == DUAL_READ_CMD) ||
+	    (Command == QUAD_READ_CMD)) {
+		ByteCount += DUMMY_SIZE;
+	}
+	/*
+	 * Send the read command to the FLASH to read the specified number
+	 * of bytes from the FLASH, send the read command and address and
+	 * receive the specified number of bytes of data in the data buffer
+	 */
+	XQspiPs_PolledTransfer(QspiPtr, pWriteBuf, pReadBuf,
+				ByteCount + OVERHEAD_SIZE);
+}
+
+
+/******************************************************************************
+*
+*
+* This function writes to the  serial FLASH connected to the QSPI interface.
+* All the data put into the buffer must be in the same page of the device with
+* page boundaries being on 256 byte boundaries.
+*
+* @param	QspiPtr is a pointer to the QSPI driver component to use.
+* @param	Address contains the address to write data to in the FLASH.
+* @param	ByteCount contains the number of bytes to write.
+* @param	Command is the command used to write data to the flash. QSPI
+*		device supports only Page Program command to write data to the
+*		flash.
+*
+* @return	None.
+*
+* @note		None.
+*
+******************************************************************************/
+void FlashWrite(XQspiPs *QspiPtr, char *pWriteBuf, u32 Address, u32 ByteCount, u8 Command)
+{
+	u8 WriteEnableCmd = { WRITE_ENABLE_CMD };
+	u8 ReadStatusCmd[] = { READ_STATUS_CMD, 0 };  /* must send 2 bytes */
+	u8 FlashStatus[2];
+
+	/*
+	 * Send the write enable command to the FLASH so that it can be
+	 * written to, this needs to be sent as a seperate transfer before
+	 * the write
+	 */
+	XQspiPs_PolledTransfer(QspiPtr, &WriteEnableCmd, NULL,
+				sizeof(WriteEnableCmd));
+	
+	
+	/*
+	 * Setup the write command with the specified address and data for the
+	 * FLASH
+	 */
+	*(pWriteBuf+COMMAND_OFFSET)  = Command;
+	*(pWriteBuf+ADDRESS_1_OFFSET) = (u8)((Address & 0xFF0000) >> 16);
+	*(pWriteBuf+ADDRESS_2_OFFSET) = (u8)((Address & 0xFF00) >> 8);
+	*(pWriteBuf+ADDRESS_3_OFFSET) = (u8)(Address & 0xFF);
+
+	/*
+	 * Send the write command, address, and data to the FLASH to be
+	 * written, no receive buffer is specified since there is nothing to
+	 * receive
+	 */
+	XQspiPs_PolledTransfer(QspiPtr, pWriteBuf, NULL,
+				ByteCount + OVERHEAD_SIZE);
+
+	/*
+	 * Wait for the write command to the FLASH to be completed, it takes
+	 * some time for the data to be written
+	 */
+	while (1) {
+		/*
+		 * Poll the status register of the FLASH to determine when it
+		 * completes, by sending a read status command and receiving the
+		 * status byte
+		 */
+		XQspiPs_PolledTransfer(QspiPtr, ReadStatusCmd, FlashStatus,
+					sizeof(ReadStatusCmd));
+
+		/*
+		 * If the status indicates the write is done, then stop waiting,
+		 * if a value of 0xFF in the status byte is read from the
+		 * device and this loop never exits, the device slave select is
+		 * possibly incorrect such that the device status is not being
+		 * read
+		 */
+		if ((FlashStatus[1] & 0x01) == 0) {
+			break;
+		}
+	}
+}
+
+/******************************************************************************
+*
+*
+* This function erases the sectors in the  serial FLASH connected to the
+* QSPI interface.
+*
+* @param	QspiPtr is a pointer to the QSPI driver component to use.
+* @param	Address contains the address of the first sector which needs to
+*		be erased.
+* @param	ByteCount contains the total size to be erased.
+*
+* @return	None.
+*
+* @note		None.
+*
+******************************************************************************/
+void FlashErase(XQspiPs *QspiPtr, u8* pWriteBuf, u32 Address, u32 ByteCount)
+{
+	u8 WriteEnableCmd = { WRITE_ENABLE_CMD };
+	u8 ReadStatusCmd[] = { READ_STATUS_CMD, 0 };  /* must send 2 bytes */
+	u8 FlashStatus[2];
+	int Sector;
+
+	/*
+	 * If erase size is same as the total size of the flash, use bulk erase
+	 * command
+	 */
+	if (ByteCount == (NUM_SECTORS * SECTOR_SIZE)) {
+		/*
+		 * Send the write enable command to the FLASH so that it can be
+		 * written to, this needs to be sent as a seperate transfer
+		 * before the erase
+		 */
+		XQspiPs_PolledTransfer(QspiPtr, &WriteEnableCmd, NULL,
+				  sizeof(WriteEnableCmd));
+
+		/*
+		 * Setup the bulk erase command
+		 */
+		*(pWriteBuf+COMMAND_OFFSET)   = BULK_ERASE_CMD;
+
+		/*
+		 * Send the bulk erase command; no receive buffer is specified
+		 * since there is nothing to receive
+		 */
+		XQspiPs_PolledTransfer(QspiPtr, pWriteBuf, NULL,
+					BULK_ERASE_SIZE);
+
+		/*
+		 * Wait for the erase command to the FLASH to be completed
+		 */
+		while (1) {
+			/*
+			 * Poll the status register of the device to determine
+			 * when it completes, by sending a read status command
+			 * and receiving the status byte
+			 */
+			XQspiPs_PolledTransfer(QspiPtr, ReadStatusCmd,
+						FlashStatus,
+						sizeof(ReadStatusCmd));
+
+			/*
+			 * If the status indicates the write is done, then stop
+			 * waiting; if a value of 0xFF in the status byte is
+			 * read from the device and this loop never exits, the
+			 * device slave select is possibly incorrect such that
+			 * the device status is not being read
+			 */
+			if ((FlashStatus[1] & 0x01) == 0) {
+				break;
+			}
+		}
+
+		return;
+	}
+
+	/*
+	 * If the erase size is less than the total size of the flash, use
+	 * sector erase command
+	 */
+	printf("begin erase QSPI flash:\r\n");
+	for (Sector = 0; Sector < ((ByteCount / SECTOR_SIZE) + 1); Sector++) {
+		printf(".");
+		if((Sector+1)%80 == 0)
+			printf("\r\n");
+		/*
+		 * Send the write enable command to the SEEPOM so that it can be
+		 * written to, this needs to be sent as a seperate transfer
+		 * before the write
+		 */
+		XQspiPs_PolledTransfer(QspiPtr, &WriteEnableCmd, NULL,
+					sizeof(WriteEnableCmd));
+
+		/*
+		 * Setup the write command with the specified address and data
+		 * for the FLASH
+		 */
+		*(pWriteBuf+COMMAND_OFFSET)  = SEC_ERASE_CMD;
+		*(pWriteBuf+ADDRESS_1_OFFSET) = (u8)(Address >> 16);
+		*(pWriteBuf+ADDRESS_2_OFFSET) = (u8)(Address >> 8);
+		*(pWriteBuf+ADDRESS_3_OFFSET) = (u8)(Address & 0xFF);
+
+		/*
+		 * Send the sector erase command and address; no receive buffer
+		 * is specified since there is nothing to receive
+		 */
+		XQspiPs_PolledTransfer(QspiPtr, pWriteBuf, NULL,
+					SEC_ERASE_SIZE);
+
+		/*
+		 * Wait for the sector erse command to the FLASH to be completed
+		 */
+		while (1) {
+			/*
+			 * Poll the status register of the device to determine
+			 * when it completes, by sending a read status command
+			 * and receiving the status byte
+			 */
+			XQspiPs_PolledTransfer(QspiPtr, ReadStatusCmd,
+						FlashStatus,
+						sizeof(ReadStatusCmd));
+
+			/*
+			 * If the status indicates the write is done, then stop
+			 * waiting, if a value of 0xFF in the status byte is
+			 * read from the device and this loop never exits, the
+			 * device slave select is possibly incorrect such that
+			 * the device status is not being read
+			 */
+			if ((FlashStatus[1] & 0x01) == 0) {
+				break;
+			}
+		}
+
+		Address += SECTOR_SIZE;
+	}
+	printf("\r\n");
+}
+
+
+/******************************************************************************
+*
+* This function reads serial FLASH ID connected to the SPI interface.
+*
+* @param	None.
+*
+* @return	XST_SUCCESS if read id, otherwise XST_FAILURE.
+*
+* @note		None.
+*
+******************************************************************************/
+int FlashReadID(XQspiPs *QspiInstancePtr, char *pWriteBuf, char *pReadBuf, int rd_size)
+{
+	int Status;
+
+	
+	Status = XQspiPs_PolledTransfer(QspiInstancePtr, pWriteBuf,pReadBuf,rd_size);
+	if (Status != XST_SUCCESS) 
+	{
+		return XST_FAILURE;
+	}
+	
+	printf("FlashID=0x%x 0x%x 0x%x\n\r", *(pReadBuf+1), *(pReadBuf+2),*(pReadBuf+3));
+	
+	return XST_SUCCESS;
+}
+
+#endif
+
+
+
+
+/*****************************************************************************/
+/**
+*
+* Looks up the device configuration based on the unique device ID. A table
+* contains the configuration info for each device in the system.
+*
+* @param	DeviceId contains the ID of the device to look up the
+*		configuration for.
+*
+* @return
+*
+* A pointer to the configuration found or NULL if the specified device ID was
+* not found. See xqspips.h for the definition of XQspiPs_Config.
+*
+* @note		None.
+*
+******************************************************************************/
+XQspiPs_Config *XQspiPs_LookupConfig(u16 DeviceId)
+{
+	XQspiPs_Config *CfgPtr = NULL;
+	int Index;
+
+	for (Index = 0; Index < XPAR_XQSPIPS_NUM_INSTANCES; Index++) {
+		if (XQspiPs_ConfigTable[Index].DeviceId == DeviceId) {
+			CfgPtr = &XQspiPs_ConfigTable[Index];
+			break;
+		}
+	}
+	return CfgPtr;
+}
+
 
 /*****************************************************************************/
 /**
@@ -714,7 +1317,7 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 	Xil_AssertNonvoid(SendBufPtr != NULL);
 	Xil_AssertNonvoid(ByteCount > 0);
 	Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
-
+	
 	/*
 	 * Check whether there is another transfer in progress. Not thread-safe.
 	 */
@@ -748,7 +1351,6 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 			break;
 		}
 	}
-
 	/*
 	 * Set the RX FIFO threshold
 	 */
@@ -786,7 +1388,6 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 			CurrInst->TxOffset = XQSPIPS_TXD_11_OFFSET;
 		}
 	}
-
 	/*
 	 * If instruction not present in table
 	 */
@@ -836,6 +1437,7 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 	 * If the instruction size in not 4 bytes then the data received needs
 	 * to be shifted
 	 */
+	 
 	if( CurrInst->InstSize != 4 ) {
 		InstancePtr->ShiftReadData = 1;
 	} else {
@@ -843,13 +1445,25 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 	}
 	TransCount = 0;
 	/* Get the complete command (flash inst + address/data) */
-	Data = *((u32 *)InstancePtr->SendBufferPtr);
+	if (CurrInst->InstSize == 1)
+		Data = *((u8 *)InstancePtr->SendBufferPtr);
+	else if (CurrInst->InstSize == 4)
+	{
+		Data = *((u32 *)InstancePtr->SendBufferPtr);	
+	}
+	else if (CurrInst->InstSize == 2)
+	{
+		Data = *((u16 *)InstancePtr->SendBufferPtr);	
+	}
+	/* printf("In XQspiPs_PolledTransfer(), data:0x%x, InstSize:0x%x\n", Data, CurrInst->InstSize); */
 	InstancePtr->SendBufferPtr += CurrInst->InstSize;
+	
+	
 	InstancePtr->RemainingBytes -= CurrInst->InstSize;
 	if (InstancePtr->RemainingBytes < 0) {
 		InstancePtr->RemainingBytes = 0;
 	}
-
+	
 	/* Write the command to the FIFO */
 	XQspiPs_WriteReg(InstancePtr->Config.BaseAddress,
 					CurrInst->TxOffset, Data);
@@ -859,6 +1473,8 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 	 * If switching from TXD1/2/3 to TXD0, then start transfer and
 	 * check for FIFO empty
 	 */
+
+	
 	if(SwitchFlag == 1) {
 		SwitchFlag = 0;
 		/*
@@ -906,7 +1522,7 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 		}
 		++TransCount;
 	}
-
+	
 	while((InstancePtr->RemainingBytes > 0) ||
 	      (InstancePtr->RequestedBytes > 0)) {
 
@@ -914,6 +1530,9 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 		 * Fill the TX FIFO with RX threshold no. of entries (or as
 		 * many as we have to send, in case that's less).
 		 */
+
+		
+		
 		while ((InstancePtr->RemainingBytes > 0) &&
 			(TransCount < XQSPIPS_RXFIFO_THRESHOLD_OPT)) {
 			XQspiPs_WriteReg(InstancePtr->Config.BaseAddress,
@@ -999,6 +1618,8 @@ int XQspiPs_PolledTransfer(XQspiPs *InstancePtr, u8 *SendBufPtr,
 				InstancePtr->RequestedBytes -= 4;
 			}
 		}
+		
+		
 		RxCount = 0;
 	}
 
