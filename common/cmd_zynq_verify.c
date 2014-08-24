@@ -59,12 +59,20 @@
 #include "sd.h"
 
 enum {
+    /* PS part */
     PS_GPIO_TEST = 1,
 	PS_MEMORY_TEST,
+	PS_UART_TEST,
 	PS_SD_TEST,
 	PS_QSPI_TEST,
 	PS_USB_TEST,
 	PS_GMAC_TEST,
+	/* PL part */
+    PL_LED_TEST = 10,
+    PL_GPIO_KEY_TEST,
+    PL_OLED_TEST,
+    PL_HDMI_TEST,
+    PL_VGA_TEST,
     SCU_GIC_SELF_TEST,
     SCU_GIC_INT_SETUP,
     /* EMAC_PS_INT_TEST */
@@ -72,10 +80,7 @@ enum {
     IIC1_PS_SELF_TEST,
     QSPI_PS_SELF_TEST,
     SCU_TIMER_POLL_TEST,
-    PL_OLED_TEST,
-    PL_HDMI_TEST,
     EEPROM_TEST,
-    PL_LED_TEST
 };
 
 
@@ -107,6 +112,9 @@ char *opnum2opstr(int op_num)
     case PS_GMAC_TEST:
         strncpy(tmp_op, "PS_GMAC_test", 100);
         break;
+    case PL_VGA_TEST:
+        strncpy(tmp_op, "PL_VGA_test", 100);
+        break;
     case IIC0_PS_SELF_TEST:        
 		strncpy(tmp_op, "I2C0_self_test", 100);
         break;
@@ -121,6 +129,9 @@ char *opnum2opstr(int op_num)
         
     case SCU_TIMER_POLL_TEST:        
 		strncpy(tmp_op, "Scu_Timer_Poll_test", 100);
+        break;
+    case PL_GPIO_KEY_TEST:
+        strncpy(tmp_op, "PL_Gpio_Key_test", 100);
         break;
     case PL_OLED_TEST:        
         strncpy(tmp_op, "OLED_Test", 100);
@@ -265,6 +276,25 @@ int zynq_ps_memory_test()
     
     printf("---Memory Test Application Complete---\n\r");
     printf("\r\n");
+    return 0;
+}
+
+int zynq_ps_uart_test()
+{
+    
+    int Status;
+    printf("---Starting PS UART Test Application---\n\r");
+
+    ps_uart_init();
+    if (Status == 0) 
+    {
+        printf("---PS UART Test Application Complete---\n\r\r\n");
+    }
+    else 
+    {
+        printf("---PS UARTTest Application Failed---\n\r\r\n");
+    }
+    
     return 0;
 }
 
@@ -562,6 +592,14 @@ int ScuTimer_Poll_Test()
     }
 }
 
+void PL_Gpio_Key_Test()
+{
+    printf("---Starting PL GPIO Key Test Application---\n\r");
+    pl_gpio_key_init();
+    printf("---PL GPIO Key Test Application Complete--\n\r");
+    return;
+}
+
 void PL_OLED_Test()
 {
     printf("---Starting OLED Test Application---\n\r");
@@ -580,6 +618,17 @@ void PL_HDMI_Test()
     printf("\r\n");
     return;
 }
+
+
+void PL_VGA_Test()
+{
+    printf("--Starting VGA Test Application--\n\r");
+    pl_vga_init();
+    printf("--VGA Test Application Complete--\n\r");
+    printf("\r\n");
+    return;
+}
+
 
 
 
@@ -616,24 +665,22 @@ int IICPs_Eeprom_test(void)
 
 int PL_Led_test(void)
 {
-	u32 Delay;
-	u32 Ledwidth;
-	u32 i;
-    XGpio GpioOutput;
-    // TBD
-    //XGpio_Initialize(&GpioOutput, XPAR_PL_LED4_DEVICE_ID);
-    XGpio_SetDataDirection(&GpioOutput, 1, 0x0);
-    XGpio_DiscreteWrite(&GpioOutput, 1, 0x0);
+	int Status;
 
-    while (1)
+    printf("--Starting PL LED Test Application--\n\r");
+
+	/*
+	 * Run the Iic EEPROM Polled Mode example.
+	 */
+	Status = pl_gpio_led_init();
+	if (Status != XST_SUCCESS) 
     {
-        for (Ledwidth = 0x0; Ledwidth < 4; Ledwidth++)
-        {
-              XGpio_DiscreteWrite(&GpioOutput, 1, 1 << Ledwidth);
-              udelay(1000000);
-              XGpio_DiscreteClear(&GpioOutput, 1, 1 << Ledwidth);
-        }
-    }
+		printf("PL LED Test Failed\r\n");
+		return XST_FAILURE;
+	}
+    
+    printf("--PL LED Test Application Complete--\n\r");
+	return XST_SUCCESS;
     
     return 0;
 }
@@ -674,6 +721,9 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	case PS_MEMORY_TEST: 
         zynq_ps_memory_test();
 		break;
+    case PS_UART_TEST:
+        zynq_ps_uart_test();
+        break;
     case PS_SD_TEST:
         zynq_ps_sd_test();
         break;
@@ -685,6 +735,21 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
         break;
     case PS_GMAC_TEST:
         zynq_ps_Gmac_test();
+        break;
+    case PL_LED_TEST:
+        PL_Led_test();
+        break;
+    case PL_GPIO_KEY_TEST:
+        PL_Gpio_Key_Test();
+        break;
+    case PL_OLED_TEST:
+        PL_OLED_Test();
+        break;
+    case PL_HDMI_TEST:
+        PL_HDMI_Test();
+        break;
+    case PL_VGA_TEST:
+        PL_VGA_Test();
         break;
     case SCU_GIC_SELF_TEST:
         ScuGicSelfTest();
@@ -703,17 +768,8 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     case SCU_TIMER_POLL_TEST:
         ScuTimer_Poll_Test();
         break;
-    case PL_OLED_TEST:
-        PL_OLED_Test();
-        break;
-    case PL_HDMI_TEST:
-        PL_HDMI_Test();
-        break;
     case EEPROM_TEST:
         IICPs_Eeprom_test();
-        break;
-    case PL_LED_TEST:
-        PL_Led_test();
         break;
 #if 0
     case DEVCFG_SELF_TEST:

@@ -233,7 +233,7 @@ static int NetTryCount;
 
 /* add by star-star for net debugging */
 #define net_debug(fmt, args...)			\
-	debug_cond(0, fmt, ##args)
+	debug_cond(1, fmt, ##args)
 
 
 /**********************************************************************/
@@ -285,7 +285,7 @@ void ArpRequest(void)
 	} else {
 		NetArpWaitReplyIP = NetArpWaitPacketIP;
 	}
-
+    
 	NetWriteIP((uchar *) &arp->ar_data[16], NetArpWaitReplyIP);
 	(void) eth_send(NetTxPacket, (pkt - NetTxPacket) + ARP_HDR_SIZE);
 }
@@ -296,9 +296,9 @@ void ArpTimeoutCheck(void)
 
 	if (!NetArpWaitPacketIP)
 		return;
-
+    net_debug("######ArpTimeoutCheck(), NetArpWaitPacketIP:0x%x\r\n", NetArpWaitPacketIP);
 	t = get_timer(0);
-
+    
 	/* check for arp timeout */
 	if ((t - NetArpWaitTimerStart) > ARP_TIMEOUT) {
 		NetArpWaitTry++;
@@ -542,7 +542,7 @@ restart:
 		 *	receive routine will process it.
 		 */
 		eth_rx();
-
+        
 		/*
 		 *	Abort if ctrl-c was pressed.
 		 */
@@ -600,6 +600,10 @@ restart:
 				sprintf(buf, "%lX", (unsigned long)load_addr);
 				setenv("fileaddr", buf);
 			}
+            /* add by star-star */
+            
+            printf("######NetLoop(), NETLOOP_SUCCESS\r\n");
+            
 			eth_halt();
 			ret = NetBootFileXferSize;
 			goto done;
@@ -839,10 +843,12 @@ static void
 PingHandler(uchar *pkt, unsigned dest, IPaddr_t sip, unsigned src,
 	    unsigned len)
 {
+    net_debug("Got it, netstate:NETLOOP_SUCCESS\n");
 	if (sip != NetPingIP)
 		return;
-
+    
 	NetState = NETLOOP_SUCCESS;
+    net_debug("Got it, netstate:NETLOOP_SUCCESS\n");
 }
 
 static void PingStart(void)
@@ -1489,8 +1495,8 @@ NetReceive(volatile uchar *inpkt, int len)
 
 	x = ntohs(et->et_protlen);
 
-	net_debug("packet received\n");
-
+	net_debug("packet received, x:0x%x\n", x);
+    
 	if (x < 1514) {
 		/*
 		 *	Got a 802 packet.  Check the other protocol field.
@@ -1579,7 +1585,7 @@ NetReceive(volatile uchar *inpkt, int len)
 
 		if (NetReadIP(&arp->ar_data[16]) != NetOurIP)
 			return;
-
+        
 		switch (ntohs(arp->ar_op)) {
 		case ARPOP_REQUEST:
 			/* reply with our IP address */
@@ -1610,7 +1616,7 @@ NetReceive(volatile uchar *inpkt, int len)
 
 			net_debug("Got ARP REPLY, set server/gtwy eth addr (%pM)\n",
 				arp->ar_data);
-
+            
 			tmp = NetReadIP(&arp->ar_data[6]);
 
 			/* matched waiting packet's address */
@@ -1621,7 +1627,7 @@ NetReceive(volatile uchar *inpkt, int len)
 				       &arp->ar_data[0], 6);
 
 #ifdef CONFIG_NETCONSOLE
-				(*packetHandler)(0, 0, 0, 0, 0);
+				(*packetHandler)(0, 0, 0, 0, 0);    /* PingHandler */
 #endif
 				/* modify header, and transmit it */
 				memcpy(((Ethernet_t *)NetArpWaitTxPacket)->et_dest, NetArpWaitPacketMAC, 6);
@@ -1797,6 +1803,10 @@ NetReceive(volatile uchar *inpkt, int len)
 						ntohs(ip->udp_src),
 						ntohs(ip->udp_len) - 8);
 		break;
+    default:
+        /* add by star-star */
+        printf("######not expected packet,x:0x%x\r\n", x);
+        break;
 	}
 }
 

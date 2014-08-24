@@ -361,6 +361,7 @@ static int find_phy(struct eth_device *dev)
 }
 #endif
 
+
 static int dw_reset_phy(struct eth_device *dev)
 {
 	struct dw_eth_dev *priv = dev->priv;
