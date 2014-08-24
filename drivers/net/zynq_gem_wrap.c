@@ -544,7 +544,7 @@ int Xgmac_send(struct eth_device *dev, volatile void *packet, int length)
 		puts("Error GMAC not initialized");
 		return 0;
 	}
-    
+    printf("Xgmac_send, step 1\n");
 	Status =
 	    XEmacPss_BdRingAlloc(&(XEmacPss_GetTxRing(&EmacPssInstance)), 1,
 				 &BdPtr);
@@ -552,7 +552,8 @@ int Xgmac_send(struct eth_device *dev, volatile void *packet, int length)
 		puts("Error allocating TxBD");
 		return 0;
 	}
-
+    printf("Xgmac_send, step 2, status:0x%x\n", Status);
+    
 	/*
 	 * Setup TxBD
 	 */
@@ -571,7 +572,7 @@ int Xgmac_send(struct eth_device *dev, volatile void *packet, int length)
 		puts("Error committing TxBD to HW");
 		return 0;
 	}
-
+    
 	/* Start transmit */
 	XEmacPss_Transmit(EmacPssInstancePtr);
 
@@ -586,10 +587,12 @@ int Xgmac_send(struct eth_device *dev, volatile void *packet, int length)
 		       Status);
 	}
     
+    printf("Xgmac_send, step 3, status:0x%x\n", Status);
+    
 	if (Status & XEMACPSS_TXSR_TXCOMPL_MASK) {
-
-//		printf("tx packet sent\n");
-
+        /* add by star-star */
+		printf("tx packet transmit completed OK\n");
+        
 		/*
 		 * Now that the frame has been sent, post process our TxBDs.
 		 */
@@ -598,7 +601,7 @@ int Xgmac_send(struct eth_device *dev, volatile void *packet, int length)
 			puts("TxBDs were not ready for post processing");
 			return 0;
 		}
-
+        
 		/*
 		 * Free the TxBD.
 		 */
@@ -700,7 +703,7 @@ int Xgmac_process_rx(XEmacPss * EmacPssInstancePtr)
 	if (! (rx_status & XEMACPSS_RXBUF_NEW_MASK)) {
 		return (-1);
 	}
-
+    
 	rx_status = XEmacPss_BdIsRxSOF(bd_addr);
 	if (!rx_status) {
 		printf("GEM: SOF not set for last buffer received!\n");

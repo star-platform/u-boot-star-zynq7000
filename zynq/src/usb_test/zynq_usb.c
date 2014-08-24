@@ -155,7 +155,7 @@ static int ulpi_viewport_wait(u32 view, u32 mask)
 		if (!(readl_ulpi(view) & mask))
 			return 0;
 
-		udelay(1000);
+		udelay(10000);
 	};
     
 	return -ETIMEDOUT;
@@ -206,7 +206,7 @@ int ulpi_phy_init()
 	pid = ulpi_id >> 16;
     
 	printf("ULPI transceiver vendor/product ID 0x%04x/0x%04x\n", vid, pid);
-
+    
     if ((vid == ULPI_USB3320_VENDOR_ID) && (pid == ULPI_USB3320_PRODUCT_ID))
     {
         printf("ulpi phy read successfully\r\n");

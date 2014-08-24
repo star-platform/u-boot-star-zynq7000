@@ -411,6 +411,8 @@ int eth_send(volatile void *packet, int length)
 {
 	if (!eth_current)
 		return -1;
+    
+    printf("######eth_send\n");
 
 	return eth_current->send(eth_current, packet, length);  /* add by star-star   Xgmac_send*/
 }
@@ -420,7 +422,7 @@ int eth_rx(void)
 	if (!eth_current)
 		return -1;
 
-	return eth_current->recv(eth_current);
+	return eth_current->recv(eth_current);      /* add by star-star Xgmac_rx */
 }
 
 #ifdef CONFIG_API

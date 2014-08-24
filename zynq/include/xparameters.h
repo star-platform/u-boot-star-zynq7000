@@ -36,8 +36,8 @@
 
 
 /* Definitions for peripheral AXI_VGA_0 */
-#define XPAR_AXI_VGA_0_BASEADDR 0x7DE20000
-#define XPAR_AXI_VGA_0_HIGHADDR 0x7DE2FFFF
+#define XPAR_AXI_VGA_0_BASEADDR 0x7DE00000
+#define XPAR_AXI_VGA_0_HIGHADDR 0x7DE0FFFF
 
 
 /* Definitions for peripheral PS7_AFI_0 */

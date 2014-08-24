@@ -23,7 +23,7 @@
 
 include $(TOPDIR)/config.mk
 
-LIB	:= $(obj)libzynq_veriry.o
+LIB	:= $(obj)libzynq_verify.o
 
 # add by star-star
 COBJS-y += memory_test/xil_testmem.o
@@ -45,6 +45,9 @@ COBJS-y += common/xgpio_g.o
 COBJS-y += common/xgpio_intr.o
 COBJS-y += common/xgpio_selftest.o
 COBJS-y += common/xgpio_sinit.o
+COBJS-y += common/sleep.o
+COBJS-y += common/usleep.o
+COBJS-y += common/xtime_l.o
 
 COBJS-y += i2c_test/xiicps.o
 COBJS-y += i2c_test/xiicps_g.o
@@ -118,8 +121,15 @@ COBJS-y += sd_test/ps7_init.o
 
 COBJS-y += oled_test/zynq_oled.o
 
+COBJS-y += ps_uart_test/zynq_ps_uart.o
 
 COBJS-y += hdmi_test/zynq_hdmi.o
+
+COBJS-y += pl_vga_test/zynq_pl_vga.o
+COBJS-y += pl_gpio_test/zynq_pl_gpio.o
+
+
+
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)
