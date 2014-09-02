@@ -412,8 +412,6 @@ int eth_send(volatile void *packet, int length)
 	if (!eth_current)
 		return -1;
     
-    printf("######eth_send\n");
-
 	return eth_current->send(eth_current, packet, length);  /* add by star-star   Xgmac_send*/
 }
 

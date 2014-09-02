@@ -36,6 +36,9 @@
 #include "xparameters.h"
 #include "xuartps_hw.h"
 
+extern int ps_uart_init (void);
+
+
 /************************** Variable Defintions ******************************/
 void uart_send(char c)
 {
@@ -48,7 +51,7 @@ char uart_rcv(void)
 	 return XUartPs_RecvByte(STDIN_BASEADDRESS);
 }
 
-int ps_uart_init ()
+int ps_uart_init (void)
 {
 
 	char rcv_char;
@@ -65,7 +68,7 @@ int ps_uart_init ()
     uart_send('r');
     uart_send('\r');
     uart_send('\n');
-
+#if 0
     /* print("Hello World\n\r"); */
     /* testing star-zynq7000 send char to PC terminal */
     while(1)
@@ -73,7 +76,7 @@ int ps_uart_init ()
         rcv_char = uart_rcv();
         printf("recieved char is %c\r\n", rcv_char);
     }
-    
+#endif    
     return 0;
 }
 

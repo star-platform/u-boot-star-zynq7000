@@ -67,8 +67,10 @@ enum {
 	PS_QSPI_TEST,
 	PS_USB_TEST,
 	PS_GMAC_TEST,
+	PS_I2C_EEPROM_TEST,
+	PS_I2C_RTC_TEST,
 	/* PL part */
-    PL_LED_TEST = 10,
+    PL_GPIO_LED_TEST = 10,
     PL_GPIO_KEY_TEST,
     PL_OLED_TEST,
     PL_HDMI_TEST,
@@ -80,7 +82,6 @@ enum {
     IIC1_PS_SELF_TEST,
     QSPI_PS_SELF_TEST,
     SCU_TIMER_POLL_TEST,
-    EEPROM_TEST,
 };
 
 
@@ -93,7 +94,7 @@ char *opnum2opstr(int op_num)
     char tmp_op[100];
     switch (op_num)
     {
-
+    
 	case PS_GPIO_TEST:
 		strncpy(tmp_op, "PS_GPIO_LED_test", 100);
 		break;
@@ -112,6 +113,13 @@ char *opnum2opstr(int op_num)
     case PS_GMAC_TEST:
         strncpy(tmp_op, "PS_GMAC_test", 100);
         break;
+    case PS_I2C_EEPROM_TEST:        
+        strncpy(tmp_op, "PS_I2C_EEPROM_Test", 100);
+        break;
+    case PS_I2C_RTC_TEST:        
+        strncpy(tmp_op, "PS_I2C_RTC_Test", 100);
+        break;
+  
     case PL_VGA_TEST:
         strncpy(tmp_op, "PL_VGA_test", 100);
         break;
@@ -139,11 +147,8 @@ char *opnum2opstr(int op_num)
     case PL_HDMI_TEST:        
 		strncpy(tmp_op, "HDMI_Test", 100);
         break;
-    case EEPROM_TEST:        
-		strncpy(tmp_op, "EEPROM_Test", 100);
-        break;
-    case PL_LED_TEST:        
-		strncpy(tmp_op, "PL_LED_Test", 100);
+    case PL_GPIO_LED_TEST:        
+		strncpy(tmp_op, "PL_GPIO_LED_Test", 100);
         break;
 	default:
 		printf("invalid zynq verification operation\n");
@@ -159,19 +164,113 @@ struct memory_range_s memory_ranges[] = {
 	{
 		"ps7_ddr_0",
 		"ps7_ddr",
-		0x00100000,
-		1072693248,
+		0x00000000,
+		0x01000000,
 	},
 	/* ps7_ram_0 memory will not be tested since application resides in the same memory */
-	{
+
+    /*{
 		"ps7_ram_1",
 		"ps7_ram",
 		0xffff0000,
 		65024,
+	},*/        
+	{
+		"ps7_ddr_0",
+		"ps7_ddr",
+		0x04100000,
+		0x00FC0000,
 	},
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x08000000,
+        0x01000000,
+    }, 
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x0c000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x10000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x14000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x18000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x1c000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x20000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x24000000,
+        0x01000000,
+    },          
+
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x28000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x2c000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x30000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x34000000,
+        0x01000000,
+    },          
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x38000000,
+        0x01000000,
+    },   
+    #if 0
+    {
+        "ps7_ddr_0",
+        "ps7_ddr",
+        0x3c000000,
+        0x01000000,
+    },   
+    #endif
 };
 
-int n_memory_ranges = 2;
+int n_memory_ranges = 16;
 
 
 void test_memory_range(struct memory_range_s *range) {
@@ -186,20 +285,22 @@ void test_memory_range(struct memory_range_s *range) {
      * If you'd like to add such functions, then please generate a linker script
      * that does allocate sufficient heap memory.
      */
-
+    
     printf("Testing memory region: %s\r\n", range->name);
     printf("    Memory Controller: %s\r", range->ip);
     printf("         Base Address: 0x%x\r\n", range->base);
-    printf("                 Size: 0x0x%x\r\n", range->size);
+    printf("                 Size: 0x%x\r\n", range->size);
     
-    status = Xil_TestMem32((u32*)range->base, 1024, 0xAAAA5555, XIL_TESTMEM_ALLMEMTESTS);
+    status = Xil_TestMem32((u32*)range->base, range->size, 0xAAAA5555, XIL_TESTMEM_ALLMEMTESTS);
     printf("          32-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
     
+    #if 0
     status = Xil_TestMem16((u16*)range->base, 2048, 0xAA55, XIL_TESTMEM_ALLMEMTESTS);
     printf("          16-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
     
     status = Xil_TestMem8((u8*)range->base, 4096, 0xA5, XIL_TESTMEM_ALLMEMTESTS);
     printf("          8-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
+    #endif
 }
 
 
@@ -268,9 +369,8 @@ int zynq_ps_memory_test()
     printf("NOTE: This application runs with D-Cache disabled.");
     printf("As a result, cacheline requests will not be generated\n\r");
 
-    for (i = 0; i < n_memory_ranges; i++) 
+    for (i = 13; i < n_memory_ranges; i++) 
     {
-        mdelay(1000);
         test_memory_range(&memory_ranges[i]);
     }
     
@@ -456,6 +556,37 @@ int zynq_ps_Gmac_test()
 
 
 
+int zynq_pl_gpio_led_test(void)
+{
+	int Status;
+
+    printf("--Starting PL LED Test Application--\n\r");
+    
+	/*
+	 * Run the Iic EEPROM Polled Mode example.
+	 */
+	Status = pl_gpio_led_init();
+	if (Status != XST_SUCCESS) 
+    {
+		printf("PL LED Test Failed\r\n");
+		return XST_FAILURE;
+	}
+    
+    printf("--PL LED Test Application Complete--\n\r");
+	return XST_SUCCESS;
+    
+    return 0;
+}
+
+
+void zynq_pl_gpio_key_test()
+{
+    printf("---Starting PL GPIO Key Test Application---\n\r");
+    pl_gpio_key_init();
+    printf("---PL GPIO Key Test Application Complete--\n\r");
+    return;
+}
+
 
 
 int ScuGicSelfTest()
@@ -514,7 +645,6 @@ int EmacPsIntrTest()
     }
 
 }
-#endif
 
 
 int IICPS_SelfTest(int device_id)
@@ -533,6 +663,8 @@ int IICPS_SelfTest(int device_id)
       }
       return 0;
 }
+#endif
+
 
 int QspiPS_SelfTest()
 {
@@ -592,13 +724,6 @@ int ScuTimer_Poll_Test()
     }
 }
 
-void PL_Gpio_Key_Test()
-{
-    printf("---Starting PL GPIO Key Test Application---\n\r");
-    pl_gpio_key_init();
-    printf("---PL GPIO Key Test Application Complete--\n\r");
-    return;
-}
 
 void PL_OLED_Test()
 {
@@ -643,10 +768,10 @@ void PL_VGA_Test()
 * @note		None.
 *
 ******************************************************************************/
-int IICPs_Eeprom_test(void)
+int zynq_ps_I2c_eeprom_test(void)
 {
 	int Status;
-
+    
     printf("--Starting EEPROM Test Application--\n\r");
 
 	/*
@@ -663,27 +788,6 @@ int IICPs_Eeprom_test(void)
 }
 
 
-int PL_Led_test(void)
-{
-	int Status;
-
-    printf("--Starting PL LED Test Application--\n\r");
-
-	/*
-	 * Run the Iic EEPROM Polled Mode example.
-	 */
-	Status = pl_gpio_led_init();
-	if (Status != XST_SUCCESS) 
-    {
-		printf("PL LED Test Failed\r\n");
-		return XST_FAILURE;
-	}
-    
-    printf("--PL LED Test Application Complete--\n\r");
-	return XST_SUCCESS;
-    
-    return 0;
-}
 
 /* ------------------------------------------------------------------------- */
 /* command form:
@@ -693,7 +797,7 @@ int PL_Led_test(void)
  * If there is no data addr field, the fpgadata environment variable is used.
  * The info command requires no data address field.
  */
-int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
+int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
     unsigned int op_num;
     char *op_str;
@@ -715,6 +819,7 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     
 	switch (op_num) 
     {
+    /* PS test */
     case PS_GPIO_TEST:
         zynq_ps_gpio_led_test();
         break;
@@ -736,11 +841,18 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     case PS_GMAC_TEST:
         zynq_ps_Gmac_test();
         break;
-    case PL_LED_TEST:
-        PL_Led_test();
+    case PS_I2C_EEPROM_TEST:
+        zynq_ps_I2c_eeprom_test();
+        break;
+    case PS_I2C_RTC_TEST:
+        zynq_ps_I2c_rtc_test();
+        break;
+    /* PL test */
+    case PL_GPIO_LED_TEST:
+        zynq_pl_gpio_led_test();
         break;
     case PL_GPIO_KEY_TEST:
-        PL_Gpio_Key_Test();
+        zynq_pl_gpio_key_test();
         break;
     case PL_OLED_TEST:
         PL_OLED_Test();
@@ -756,32 +868,21 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     case SCU_GIC_INT_SETUP:
         ScuGicIntSetup();
         break;
+#if 0
     case IIC0_PS_SELF_TEST:
         IICPS_SelfTest(0);
         break;
     case IIC1_PS_SELF_TEST:
         IICPS_SelfTest(1);
         break;
+#endif
+
     case QSPI_PS_SELF_TEST:
         QspiPS_SelfTest();
         break;
     case SCU_TIMER_POLL_TEST:
         ScuTimer_Poll_Test();
         break;
-    case EEPROM_TEST:
-        IICPs_Eeprom_test();
-        break;
-#if 0
-    case DEVCFG_SELF_TEST:
-        Dcfg_Self_Test();
-        break;
-        
-    /* delete because mmu needed */
-    case EMAC_PS_INT_TEST:
-        EmacPsIntrTest();
-        break;       
-#endif
-        
     default:
         printf("invalid parameter, no zynq verification\n");        
         printf("***************************************\n");   
@@ -792,7 +893,7 @@ int do_zynq_verify (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	return 0;
 }
 
-U_BOOT_CMD (zynq_verify, 3, 1, do_zynq_verify,
+U_BOOT_CMD (star_zynq7000_example, 3, 1, do_star_zynq7000_example,
 	"verify star-zynq7000 board function",
 	"[do_zynq_verify] [number]\n"
 	"zynq verify operations no:operation\n"

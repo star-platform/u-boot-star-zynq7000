@@ -304,7 +304,7 @@ LIBS += post/libpost.o
 
 
 # add by star-star
-LIBS += zynq/src/libzynq_verify.o
+LIBS += zynq/src/libzynq.o
 
 ifneq ($(CONFIG_AM33XX)$(CONFIG_OMAP34XX)$(CONFIG_OMAP44XX)$(CONFIG_OMAP54XX),)
 LIBS += $(CPUDIR)/omap-common/libomap-common.o

@@ -46,8 +46,9 @@ int pl_gpio_key_init ()
 {
 
     int Status;
-    u32 DataRead;
+    u32 DataRead = 0;
     int i = 0;
+    int test_count = 0;
     
     Status = XGpio_Initialize(&Gpio_keys, XPAR_KEY_IO_DEVICE_ID);
     if (Status != XST_SUCCESS) 
@@ -63,18 +64,30 @@ int pl_gpio_key_init ()
     {
         return XST_FAILURE;
     }
-
+    
     XGpio_SetDataDirection(&Gpio_leds, 1, 0x0);
-
+    
     printf("\r\n");
-    for (i = 0; i < 10; i++)
+    printf("****** Totally 5 times testing, you have %d times left\r\n", (5 - test_count));
+    while(test_count < 5)
     {
-        printf("****** 10 times testing, you have the %d times left\r\n", (9-i));
         DataRead = XGpio_DiscreteRead(&Gpio_keys, 1);
-        sleep(1);
-        printf("Gpio_keys:0x%x\r\n",DataRead);
-        XGpio_DiscreteWrite(&Gpio_leds, 1, DataRead);
+        if ((DataRead & 0x1F) != 0x1F)
+        {
+            XGpio_DiscreteWrite(&Gpio_leds, 1, DataRead);
+            usleep(300000);
+            printf("read again\n");
+            DataRead = XGpio_DiscreteRead(&Gpio_keys, 1);
+            printf("dataread:0x%x\r\n", DataRead);
+            XGpio_DiscreteWrite(&Gpio_leds, 1, DataRead);
+            usleep(300000);
+            test_count++;
+            printf("****** you still have %d times left\r\n", (5 - test_count));
+        }                
     }
+    usleep(500000);
+    DataRead = XGpio_DiscreteRead(&Gpio_keys, 1);
+    XGpio_DiscreteWrite(&Gpio_leds, 1, DataRead);
     
     return 0;
 }
@@ -91,7 +104,7 @@ int pl_gpio_led_init()
     XGpio_SetDataDirection(&GpioOutput, 1, 0x0);
     XGpio_DiscreteWrite(&GpioOutput, 1, 0x0);
     
-    for (i = 0; i < 3; i++)
+    for (i = 0; i < 2; i++)
     {
         for (Ledwidth = 0x0; Ledwidth < 5; Ledwidth++)
         {
@@ -100,6 +113,8 @@ int pl_gpio_led_init()
              XGpio_DiscreteClear(&GpioOutput, 1, 1 << Ledwidth);
         }
     }
+    /* Turn OFF all the LED */
+    XGpio_DiscreteWrite(&GpioOutput, 1, 0x1F);
     
     return 0;
 }

@@ -74,7 +74,6 @@
 /*
  * The slave address to send to and receive from.
  */
-#define IIC_SLAVE_ADDR		0x55
 #define IIC_SCLK_RATE		100000
 
 /*
@@ -142,7 +141,7 @@ int IicPsMasterPolled_Init(u16 DeviceId)
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
-
+    
 	/*
 	 * Set the IIC serial clock rate.
 	 */
@@ -204,9 +203,9 @@ int IicPsMasterPolled_Read(u8 dev_id, u8 raddr, u8 ReadBuffer[])
 {
 	int Status;
     u8 WriteBuffer[2];              /* Write buffer for writing register. */
-    WriteBuffer[0]=raddr;
+    WriteBuffer[0] = raddr;
     /** Send the Data. */
-
+    
 	Status = XIicPs_MasterSendPolled(&IICInstance, WriteBuffer,
 			 1, dev_id);
 	if (Status != XST_SUCCESS) {

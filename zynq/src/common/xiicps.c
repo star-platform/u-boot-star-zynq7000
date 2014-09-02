@@ -158,9 +158,12 @@ int XIicPs_BusIsBusy(XIicPs *InstancePtr)
 
 	StatusReg = XIicPs_ReadReg(InstancePtr->Config.BaseAddress,
 					   XIICPS_SR_OFFSET);
-	if (StatusReg & XIICPS_SR_BA_MASK) {
+	if (StatusReg & XIICPS_SR_BA_MASK) 
+    {
 		return TRUE;
-	}else {
+	}
+    else 
+    {
 		return FALSE;
 	}
 }

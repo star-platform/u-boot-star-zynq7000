@@ -40,7 +40,7 @@
 
 
 #define CONFIG_IPADDR   192.168.1.253
-#define CONFIG_SERVERIP 192.168.1.9
+#define CONFIG_SERVERIP 192.168.1.8
 
 #define CONFIG_SYS_DCACHE_OFF   /*verify hdmi function*/
 #define CONFIG_SYS_ICACHE_OFF
@@ -110,7 +110,7 @@
 #define CONFIG_SYS_PROMPT	"star-uboot> "
 
 
-#define CONFIG_BOOTDELAY		5
+#define CONFIG_BOOTDELAY		3
 
 /* this is to initialize GEM at uboot start */
 /* #define CONFIG_ZYNQ_INIT_GEM	*/

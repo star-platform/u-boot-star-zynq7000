@@ -117,7 +117,7 @@ typedef volatile unsigned char	vu_char;
 #include <image.h>
 
 /* add by star-star */
-/* #define DEBUG */
+//#define DEBUG
 
 #ifdef DEBUG
 #define _DEBUG	1

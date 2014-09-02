@@ -233,7 +233,7 @@ static int NetTryCount;
 
 /* add by star-star for net debugging */
 #define net_debug(fmt, args...)			\
-	debug_cond(1, fmt, ##args)
+	debug_cond(0, fmt, ##args)
 
 
 /**********************************************************************/
@@ -296,9 +296,10 @@ void ArpTimeoutCheck(void)
 
 	if (!NetArpWaitPacketIP)
 		return;
+#if 0
     net_debug("######ArpTimeoutCheck(), NetArpWaitPacketIP:0x%x\r\n", NetArpWaitPacketIP);
 	t = get_timer(0);
-    
+#endif
 	/* check for arp timeout */
 	if ((t - NetArpWaitTimerStart) > ARP_TIMEOUT) {
 		NetArpWaitTry++;
@@ -599,10 +600,7 @@ restart:
 
 				sprintf(buf, "%lX", (unsigned long)load_addr);
 				setenv("fileaddr", buf);
-			}
-            /* add by star-star */
-            
-            printf("######NetLoop(), NETLOOP_SUCCESS\r\n");
+			}            
             
 			eth_halt();
 			ret = NetBootFileXferSize;
@@ -1805,7 +1803,7 @@ NetReceive(volatile uchar *inpkt, int len)
 		break;
     default:
         /* add by star-star */
-        printf("######not expected packet,x:0x%x\r\n", x);
+        net_debug("######not expected packet,x:0x%x\r\n", x);
         break;
 	}
 }
