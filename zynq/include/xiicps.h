@@ -235,6 +235,7 @@ extern "C" {
 #define SENDING_ROLE		1  /**< Transfer direction is sending */
 #define RECVING_ROLE		0  /**< Transfer direction is receiving */
 
+#define IIC_SCLK_RATE		100000
 
 /**************************** Type Definitions *******************************/
 

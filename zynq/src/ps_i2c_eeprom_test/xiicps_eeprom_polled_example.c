@@ -97,8 +97,11 @@
  * IIC bus. Note that since the address is only 7 bits, this constant is the
  * address divided by 2.
  */
-#define IIC_SLAVE_ADDR		0x50   /* since AT24C02A is used, A2 A1 A0: 0 0 0 */
-#define IIC_SCLK_RATE		100000
+ 
+/* since AT24C02A is used, A2 A1 A0: 0 0 0 */
+#define IIC_SLAVE_ADDR		0x50   
+
+
 #define IIC_MUX_ADDRESS 	0x74
 
 /*

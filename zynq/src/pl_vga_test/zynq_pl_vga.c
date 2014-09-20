@@ -48,15 +48,12 @@ int pl_vga_init ()
     int Status;
     int i;
     int j;
-    for(j = 0; j < 3; j++)
+    for (i = 0; i < 13; i++)
     {
-        for (i = 0; i < 13; i++)
-        {
-            Xil_Out32((VGA_BASEADDR + 0x000), i);        // change the test picture of VGA
-            mdelay(200);
-        }
-    }
-    
+        printf("%d picture show\r\n", i+1);
+        Xil_Out32((VGA_BASEADDR + 0x000), i);        // change the test picture of VGA
+        mdelay(1000);
+    }  
     return 0;
 }
 

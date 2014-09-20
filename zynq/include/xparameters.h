@@ -68,14 +68,6 @@
 /* Definitions for peripheral PS7_DDR_0 */
 #define XPAR_PS7_DDR_0_S_AXI_BASEADDR 0x00100000
 #define XPAR_PS7_DDR_0_S_AXI_HIGHADDR 0x3FFFFFFF
-#define XPAR_PS7_DDR_0_S_AXI_HP0_BASEADDR 0x00000000
-#define XPAR_PS7_DDR_0_S_AXI_HP0_HIGHADDR 0x3FFFFFFF
-#define XPAR_PS7_DDR_0_S_AXI_HP1_BASEADDR 0x00000000
-#define XPAR_PS7_DDR_0_S_AXI_HP1_HIGHADDR 0x3FFFFFFF
-#define XPAR_PS7_DDR_0_S_AXI_HP2_BASEADDR 0x00000000
-#define XPAR_PS7_DDR_0_S_AXI_HP2_HIGHADDR 0x3FFFFFFF
-#define XPAR_PS7_DDR_0_S_AXI_HP3_BASEADDR 0x00000000
-#define XPAR_PS7_DDR_0_S_AXI_HP3_HIGHADDR 0x3FFFFFFF
 
 
 /* Definitions for peripheral PS7_DDRC_0 */
@@ -268,54 +260,39 @@
 /******************************************************************/
 
 /* Definitions for driver GPIO */
-#define XPAR_XGPIO_NUM_INSTANCES 3
+#define XPAR_XGPIO_NUM_INSTANCES 2
 
 /* Definitions for peripheral KEY_IO */
-#define XPAR_KEY_IO_BASEADDR 0x41240000
-#define XPAR_KEY_IO_HIGHADDR 0x4124FFFF
+#define XPAR_KEY_IO_BASEADDR 0x41200000
+#define XPAR_KEY_IO_HIGHADDR 0x4120FFFF
 #define XPAR_KEY_IO_DEVICE_ID 0
 #define XPAR_KEY_IO_INTERRUPT_PRESENT 0
 #define XPAR_KEY_IO_IS_DUAL 0
 
 
 /* Definitions for peripheral LED_IO */
-#define XPAR_LED_IO_BASEADDR 0x41280000
-#define XPAR_LED_IO_HIGHADDR 0x4128FFFF
+#define XPAR_LED_IO_BASEADDR 0x41240000
+#define XPAR_LED_IO_HIGHADDR 0x4124FFFF
 #define XPAR_LED_IO_DEVICE_ID 1
 #define XPAR_LED_IO_INTERRUPT_PRESENT 0
 #define XPAR_LED_IO_IS_DUAL 0
 
 
-/* Definitions for peripheral OLED_IO */
-#define XPAR_OLED_IO_BASEADDR 0x41200000
-#define XPAR_OLED_IO_HIGHADDR 0x4120FFFF
-#define XPAR_OLED_IO_DEVICE_ID 2
-#define XPAR_OLED_IO_INTERRUPT_PRESENT 0
-#define XPAR_OLED_IO_IS_DUAL 0
-
-
 /******************************************************************/
 
 /* Canonical definitions for peripheral KEY_IO */
-#define XPAR_GPIO_0_BASEADDR 0x41240000
-#define XPAR_GPIO_0_HIGHADDR 0x4124FFFF
+#define XPAR_GPIO_0_BASEADDR 0x41200000
+#define XPAR_GPIO_0_HIGHADDR 0x4120FFFF
 #define XPAR_GPIO_0_DEVICE_ID XPAR_KEY_IO_DEVICE_ID
 #define XPAR_GPIO_0_INTERRUPT_PRESENT 0
 #define XPAR_GPIO_0_IS_DUAL 0
 
 /* Canonical definitions for peripheral LED_IO */
-#define XPAR_GPIO_1_BASEADDR 0x41280000
-#define XPAR_GPIO_1_HIGHADDR 0x4128FFFF
+#define XPAR_GPIO_1_BASEADDR 0x41240000
+#define XPAR_GPIO_1_HIGHADDR 0x4124FFFF
 #define XPAR_GPIO_1_DEVICE_ID XPAR_LED_IO_DEVICE_ID
 #define XPAR_GPIO_1_INTERRUPT_PRESENT 0
 #define XPAR_GPIO_1_IS_DUAL 0
-
-/* Canonical definitions for peripheral OLED_IO */
-#define XPAR_GPIO_2_BASEADDR 0x41200000
-#define XPAR_GPIO_2_HIGHADDR 0x4120FFFF
-#define XPAR_GPIO_2_DEVICE_ID XPAR_OLED_IO_DEVICE_ID
-#define XPAR_GPIO_2_INTERRUPT_PRESENT 0
-#define XPAR_GPIO_2_IS_DUAL 0
 
 
 /******************************************************************/
@@ -612,13 +589,13 @@
 #define XPAR_CPU_ID 0
 
 /* Definitions for peripheral PS7_CORTEXA9_0 */
-#define XPAR_PS7_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666688
+#define XPAR_PS7_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
 
 
 /******************************************************************/
 
 /* Canonical definitions for peripheral PS7_CORTEXA9_0 */
-#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666688
+#define XPAR_CPU_CORTEXA9_0_CPU_CLK_FREQ_HZ 666666687
 
 
 /******************************************************************/

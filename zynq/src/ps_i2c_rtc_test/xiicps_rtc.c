@@ -111,52 +111,52 @@ int zynq_ps_I2c_rtc_test(void)
     if (Status != XST_SUCCESS)
         printf("I2c init rts error\r\n");
     
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, CTRL_STATUS_1, &ctrl_stat_1);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, CTRL_STATUS_1, &ctrl_stat_1);
     printf("ctrl status 1:0x%x\r\n", ctrl_stat_1);
     
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, CTRL_STATUS_2, &ctrl_stat_2);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, CTRL_STATUS_2, &ctrl_stat_2);
     printf("ctrl status 2:0x%x\r\n", ctrl_stat_2);
     
 #if 0
     data = 0x00;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, VL_SECONDS, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, VL_SECONDS, data);
     data = 0x14;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, MINUTES, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, MINUTES, data);
     data = 0x08;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, HOURS, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, HOURS, data);
 #endif
     
 #if 0
     data = 0x02;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, DAYS, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, DAYS, data);
     data = 0x02;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, WEEKDAYS, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, WEEKDAYS, data);
     data = 0x09;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, CENTURY_MONTHS, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, CENTURY_MONTHS, data);
     data = 0x14;
-    Status = IicPsMasterPolled_Write(IIC_SLAVE_ADDR, YEARS, data);
+    Status = IicPsRtcPolled_Write(IIC_SLAVE_ADDR, YEARS, data);
 #endif
     
     
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, VL_SECONDS, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, VL_SECONDS, &data);
     printf("vl seconds:0x%x\r\n", data);
 
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, MINUTES, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, MINUTES, &data);
     printf("minutes:0x%x\r\n", data);
 
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, HOURS, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, HOURS, &data);
     printf("hours:0x%x\r\n", data);
 
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, DAYS, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, DAYS, &data);
     printf("days:0x%x\r\n", data);
 
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, WEEKDAYS, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, WEEKDAYS, &data);
     printf("weekdays:0x%x\r\n", data);
 
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, CENTURY_MONTHS, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, CENTURY_MONTHS, &data);
     printf("months:0x%x\r\n", data);
     
-    Status = IicPsMasterPolled_Read(IIC_SLAVE_ADDR, YEARS, &data);
+    Status = IicPsRtcPolled_Read(IIC_SLAVE_ADDR, YEARS, &data);
     printf("years:0x%x\r\n", data);
 
     return 0;

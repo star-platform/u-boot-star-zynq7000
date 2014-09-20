@@ -72,9 +72,10 @@ enum {
 	/* PL part */
     PL_GPIO_LED_TEST = 10,
     PL_GPIO_KEY_TEST,
+    PL_AUDIO_TEST,
+    PL_VGA_TEST,
     PL_OLED_TEST,
     PL_HDMI_TEST,
-    PL_VGA_TEST,
     SCU_GIC_SELF_TEST,
     SCU_GIC_INT_SETUP,
     /* EMAC_PS_INT_TEST */
@@ -140,6 +141,9 @@ char *opnum2opstr(int op_num)
         break;
     case PL_GPIO_KEY_TEST:
         strncpy(tmp_op, "PL_Gpio_Key_test", 100);
+        break;
+    case PL_AUDIO_TEST:
+        strncpy(tmp_op, "PL_Audio_test", 100);
         break;
     case PL_OLED_TEST:        
         strncpy(tmp_op, "OLED_Test", 100);
@@ -313,7 +317,7 @@ int zynq_ps_gpio_led_test()
     
     printf("---Starting PS GPIO LED Test Application---\n\r");
     
-
+    
 	/*
 	 * Initialize the GPIO driver.
 	 */
@@ -323,7 +327,6 @@ int zynq_ps_gpio_led_test()
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
-
 
     /* set GPIO_LED_PIN*/
 	XGpioPs_SetDirectionPin(&Gpio, GPIO_LED_PIN, 1);
@@ -357,7 +360,7 @@ int zynq_ps_gpio_led_test()
     
     printf("---PS GPIO LED Test Application Complete---\n\r");
     printf("\r\n");
-     
+      
     return 0;
 }
 
@@ -584,6 +587,14 @@ void zynq_pl_gpio_key_test()
     printf("---Starting PL GPIO Key Test Application---\n\r");
     pl_gpio_key_init();
     printf("---PL GPIO Key Test Application Complete--\n\r");
+    return;
+}
+
+void zynq_pl_audio_test()
+{
+    printf("---Starting PL Audio Test Application---\n\r");
+    pl_audio_init();
+    printf("---PL Audio Test Application Complete--\n\r");
     return;
 }
 
@@ -854,14 +865,18 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
     case PL_GPIO_KEY_TEST:
         zynq_pl_gpio_key_test();
         break;
-    case PL_OLED_TEST:
-        PL_OLED_Test();
+    case PL_AUDIO_TEST:
+        zynq_pl_audio_test();
+        break;
+    case PL_VGA_TEST:
+        PL_VGA_Test();
         break;
     case PL_HDMI_TEST:
         PL_HDMI_Test();
         break;
-    case PL_VGA_TEST:
-        PL_VGA_Test();
+        
+    case PL_OLED_TEST:
+        PL_OLED_Test();
         break;
     case SCU_GIC_SELF_TEST:
         ScuGicSelfTest();

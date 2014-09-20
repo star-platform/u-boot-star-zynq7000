@@ -221,7 +221,8 @@ u32 LoadBootImage(void)
 	 * Get partitions header information
 	 */
 	Status = GetPartitionHeaderInfo(ImageStartAddress);
-	if (Status != XST_SUCCESS) {
+	if (Status != XST_SUCCESS) 
+    {
 		fsbl_printf(DEBUG_GENERAL, "Partition Header Load Failed\r\n");
 		OutputStatus(GET_HEADER_INFO_FAIL);
 		FsblFallback();
@@ -573,7 +574,7 @@ u32 GetPartitionHeaderInfo(u32 ImageBaseAddress)
     	fsbl_printf(DEBUG_GENERAL, "Get Header Start Address Failed\r\n");
     	return XST_FAILURE;
     }
-
+    
     /*
      * Header offset on flash
      */

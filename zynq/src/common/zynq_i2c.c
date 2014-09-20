@@ -29,7 +29,7 @@
 #include <asm/errno.h>
 
 #include <malloc.h>
-
+#include "xiicps.h"
 
 #define DEBUG
 
@@ -131,6 +131,9 @@ static struct zynq_i2c_registers *zynq_i2c =
 
 
 
+
+
+
 // I2C Config Struct
 typedef struct {
 	u8 Reg;
@@ -169,6 +172,7 @@ ZC702_I2C_CONFIG zc702_hdmi_out_config2[ZC702_HDMI_OUT_LEN2] =
 };
 
 
+XIicPs IIC1Instance;  
 
 
 static void iic_writex( u8 Address, ZC702_I2C_CONFIG Config[], u32 Length )
@@ -379,41 +383,3 @@ unsigned int i2c_get_bus_num(void)
 	/* Only support bus 0 */
 	return 0;
 }
-
-
-int si9134_i2c_init(void)
-{
-
-    u8 data[8];
-	int i=0;
-    i2c_read(ZC702_HDMI_ADDR1,0,0,data,8); 
-    #if 1
-	for(i = 0;i < 8;i++)
-	{
-        printf("%x ",data[i]);
-	}
-    printf("\n");
-	printf("som initialize hdmi starting...\n\r");
-    #endif
-	// write Sii9134 configuration
-	iic_writex( ZC702_HDMI_ADDR1, zc702_hdmi_out_config1, ZC702_HDMI_OUT_LEN1 );
-    
-    
-	iic_writex( ZC702_HDMI_ADDR2, zc702_hdmi_out_config2, ZC702_HDMI_OUT_LEN2 );
-
-	memset(data,0,8);
-    i2c_read(ZC702_HDMI_ADDR1,0,0,data,8);  
-        
-    #if 1
-	printf("i2c configure si9134 done!\n\r");
-            
-	for(i = 0;i < 8;i++)
-	{
-        printf("%x ",data[i]);
-	}
-    printf("\n");
-    #endif
-    
-    return 0;
-}
-

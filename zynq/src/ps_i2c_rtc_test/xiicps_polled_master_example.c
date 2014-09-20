@@ -74,7 +74,6 @@
 /*
  * The slave address to send to and receive from.
  */
-#define IIC_SCLK_RATE		100000
 
 /*
  * The following constant controls the length of the buffers to be sent
@@ -133,7 +132,7 @@ int IicPsMasterPolled_Init(u16 DeviceId)
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
-
+    
 	/*
 	 * Perform a self-test to ensure that the hardware was built correctly.
 	 */
@@ -152,7 +151,7 @@ int IicPsMasterPolled_Init(u16 DeviceId)
 }
 
 
-int IicPsMasterPolled_Write(u8 dev_id, u8 waddr, u8 wdata)
+int IicPsRtcPolled_Write(u8 dev_id, u8 waddr, u8 wdata)
 {
 
 	int Status;
@@ -199,7 +198,7 @@ int IicPsMasterPolled_Write(u8 dev_id, u8 waddr, u8 wdata)
 *
 *******************************************************************************/
 
-int IicPsMasterPolled_Read(u8 dev_id, u8 raddr, u8 ReadBuffer[])
+int IicPsRtcPolled_Read(u8 dev_id, u8 raddr, u8 ReadBuffer[])
 {
 	int Status;
     u8 WriteBuffer[2];              /* Write buffer for writing register. */

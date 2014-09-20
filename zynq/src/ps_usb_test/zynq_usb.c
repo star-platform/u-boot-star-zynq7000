@@ -168,7 +168,7 @@ static int ulpi_viewport_read(u32 reg)
 	u32 view_port = 0xe0002000 + ULPI_VIEWPORT;
 	printf("view_port:0x%x\n\r", view_port);
 	writel_ulpi(ULPI_VIEW_WAKEUP | ULPI_VIEW_WRITE, view_port);
-
+    
 	printf("view_port=0x%x\n",readl_ulpi(view_port));
 	ret = ulpi_viewport_wait(view_port, ULPI_VIEW_WAKEUP);
 	if (ret)

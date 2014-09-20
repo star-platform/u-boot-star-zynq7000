@@ -57,6 +57,7 @@ COBJS-y += common/xiicps_intr.o
 COBJS-y += common/xiicps_sinit.o
 COBJS-y += common/xiicps_options.o
 COBJS-y += common/xiicps_master.o
+COBJS-y += common/xiic_l.o
 COBJS-y += common/zynq_i2c.o
 
 
@@ -126,14 +127,15 @@ COBJS-y += ps_sd_test/ps7_init.o
 
 COBJS-y += ps_uart_test/zynq_ps_uart.o
 
-COBJS-y += pl_oled_test/zynq_oled.o
+COBJS-y += pl_oled_test/zynq_pl_oled.o
 
-COBJS-y += pl_hdmi_test/zynq_hdmi.o
+COBJS-y += pl_hdmi_test/zynq_pl_hdmi.o
 
 COBJS-y += pl_vga_test/zynq_pl_vga.o
 
 COBJS-y += pl_gpio_test/zynq_pl_gpio.o
 
+COBJS-y += pl_audio_test/zynq_pl_audio.o
 
 COBJS	:= $(COBJS-y)
 SRCS	:= $(COBJS:.o=.c)

@@ -149,21 +149,25 @@ u32 SDAccess( u32 SourceAddress, u32 DestinationAddress, u32 LengthBytes)
 
 	FRESULT rc;	 /* Result code */
 	UINT br;
-
+    u32 dest_cnt;
 	rc = f_lseek(&fil, SourceAddress);
-	if (rc) {
-		fsbl_printf(DEBUG_INFO,"SD: Unable to seek to %x\n", SourceAddress);
+	if (rc) 
+    {
+		printf("SD: Unable to seek to %x\n", SourceAddress);
 		return XST_FAILURE;
 	}
-
+    
 	rc = f_read(&fil, (void*)DestinationAddress, LengthBytes, &br);
-
-	if (rc) {
-		fsbl_printf(DEBUG_GENERAL,"*** ERROR: f_read returned %d\r\n", rc);
+    
+	if (rc) 
+    {
+		printf("*** ERROR: f_read returned %d\r\n", rc);
 	}
-
+    dest_cnt = *((u32*)DestinationAddress);
+    
+    printf("DestinationAddress:0x%x, dest cont:0x%x\r\n", DestinationAddress, dest_cnt);
 	return XST_SUCCESS;
-
+    
 } /* End of SDAccess */
 
 
