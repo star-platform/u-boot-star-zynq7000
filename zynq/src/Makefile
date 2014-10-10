@@ -127,7 +127,7 @@ COBJS-y += ps_sd_test/ps7_init.o
 
 COBJS-y += ps_uart_test/zynq_ps_uart.o
 
-COBJS-y += pl_oled_test/zynq_pl_oled.o
+#COBJS-y += pl_oled_test/zynq_pl_oled.o
 
 COBJS-y += pl_hdmi_test/zynq_pl_hdmi.o
 

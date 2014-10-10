@@ -166,23 +166,39 @@ struct spi_flash *spi_flash_probe_winbond(struct spi_slave *spi, u8 *idcode)
 	flash->read = spi_flash_cmd_read_fast;
 	flash->page_size = page_size;
 	flash->sector_size = page_size * params->pages_per_sector;
-	
+    
+	/* add by star */
+    /*
+            printf("Winbond Flash found, is_dual:%d, page_size:%d, pages_per_sector:%d, sectors_per_block:%d, nr_blocks:%d\n", 
+                flash->spi->is_dual, page_size, params->pages_per_sector, params->sectors_per_block, params->nr_blocks);
+            {
+                .id			= 0x4019,
+                .l2_page_size		= 8,
+                .pages_per_sector	= 16,
+                .sectors_per_block	= 16,
+                .nr_blocks		= 256,
+                .name			= "W25Q256",
+            }	
+    */
 	/* address width is 4 for dual and 3 for single qspi */
+
+#if 0
 	if (flash->spi->is_dual == 1) 
     {
 		flash->addr_width = 4;
 		flash->size = page_size * params->pages_per_sector
 				* params->sectors_per_block
 				* (2 * params->nr_blocks);
-	} 
-    else if (flash->spi->is_dual == 0) 
+	}    
+#endif
+/*    else if (flash->spi->is_dual == 0)  */
     {
 		flash->addr_width = 3;
         /* 256*16*16*256 */
 		flash->size = page_size * params->pages_per_sector
 				* params->sectors_per_block
-				* params->nr_blocks;
-        
+				* 2* params->nr_blocks;
+        /* printf("Winbond flash size:%x\r\n", flash->size); */
 	}
 	return flash;
 }

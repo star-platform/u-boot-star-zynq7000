@@ -141,7 +141,7 @@ struct spi_slave *spi_setup_slave(unsigned int bus, unsigned int cs,
 				" on MIO settings\n");
 		return NULL;
 	}
-
+    
 	xqspips_init_hw((void *)XPSS_QSPI_BASEADDR, is_dual);
 
 	pspi = malloc(sizeof(struct zynq_spi_slave));

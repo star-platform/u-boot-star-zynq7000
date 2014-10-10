@@ -74,10 +74,10 @@
 	"star_test=go 0x05000000\0" \
 	"burn-qspi=sf probe 0 0 0\0" \
 	"qspiboot=sf probe 0 0 0;" \
-		"sf read 0x8000 0xf0000 0x300000;" \
-		"sf read 0x10000000 0x400000 0x400000;" \
-		"sf read 0x01000000 0x810000 0x10000;" \
-		"go 0x8000\0" \	
+		"sf read 0x8000 0x00500000 0x300000;" \
+		"sf read 0x10000000 0x00900000 0x00400000;" \
+		"sf read 0x01000000 0x00e00000 0x00010000;" \
+		"go 0x8000\0" \
 	"sdboot=echo Copying Linux from SD to RAM...; " \
 		"mmcinfo;" \
 		"fatload mmc 0 0x8000 zImage;" \

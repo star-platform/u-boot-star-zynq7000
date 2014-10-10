@@ -739,7 +739,7 @@ int ScuTimer_Poll_Test()
 void PL_OLED_Test()
 {
     printf("---Starting OLED Test Application---\n\r");
-    oled_init();
+    // oled_init();
     printf("---OLED Test Application Complete--\n\r");
     printf("\r\n");
     return;
@@ -765,7 +765,14 @@ void PL_VGA_Test()
     return;
 }
 
-
+void PL_Sil9134_config()
+{
+    printf("--Starting Sil9134 Config --\n\r");
+    SiI9134_i2c_config();
+    printf("--Sil9134 Config Complete--\n\r");
+    printf("\r\n");
+    return;
+}
 
 
 /*****************************************************************************/
@@ -875,15 +882,18 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
         PL_HDMI_Test();
         break;
         
-    case PL_OLED_TEST:
-        PL_OLED_Test();
-        break;
     case SCU_GIC_SELF_TEST:
         ScuGicSelfTest();
+        break;
     case SCU_GIC_INT_SETUP:
         ScuGicIntSetup();
         break;
 #if 0
+
+    case PL_OLED_TEST:
+        PL_OLED_Test();
+        break;
+
     case IIC0_PS_SELF_TEST:
         IICPS_SelfTest(0);
         break;
@@ -891,7 +901,7 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
         IICPS_SelfTest(1);
         break;
 #endif
-
+    
     case QSPI_PS_SELF_TEST:
         QspiPS_SelfTest();
         break;

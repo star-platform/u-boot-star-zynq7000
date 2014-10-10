@@ -184,17 +184,14 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 {
 	int op, dev = FPGA_INVALID_DEVICE;
 	size_t data_size = 0;
+    int image_word_len = 0;
     int data_addr;
 	void *fpga_data = NULL;
 	char *devstr = getenv ("fpga");
-	char *datastr = getenv ("fpgadata");
 	int rc = FPGA_FAIL;
 	int wrong_parms = 0;
-#if defined (CONFIG_FIT)
-	const char *fit_uname = NULL;
-	ulong fit_addr;
-#endif
-
+    int Status;
+    
     /* loadb\t[dev] [address] [size] */
     /* fpga loadb 0x00100000 0x000F6EBF*/
     printf("Bit stream Unencrypted \r\n");
@@ -202,9 +199,7 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
     
 	if (devstr)
 		dev = (int) simple_strtoul (devstr, NULL, 16);
-	if (datastr)
-		fpga_data = (void *) simple_strtoul (datastr, NULL, 16);
-    
+        
 	switch (argc) 
     {
 	case 4:		/* fpga <op><data addr> <datasize> */
@@ -235,7 +230,7 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	case FPGA_LOAD:
 	case FPGA_LOADB:
 	case FPGA_DUMP:
-		if (!fpga_data || !data_size)
+		if (!data_size)
 			wrong_parms = 1;
 		break;
 	case FPGA_LOADMK:
@@ -244,7 +239,8 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 		break;
 	}
     
-	if (wrong_parms) {
+	if (wrong_parms) 
+    {
 		puts("Wrong parameters for FPGA request\n");
 		op = FPGA_NONE;
 	}
@@ -260,7 +256,7 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	case FPGA_LOAD:
 		rc = fpga_load (dev, fpga_data, data_size);
 		break;
-
+    
 	case FPGA_LOADB:
         /* add by star-star */
         {
@@ -280,19 +276,27 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
         printf("before swap...\n");
         big_to_little((u32 *)(data_addr), data_size);
         printf("after swap...\n");
-        #if 1
-        rc = PcapDataTransfer(
-                (u32 *)(data_addr),
-                (u32 *)XDCFG_DMA_INVALID_ADDRESS,
-                data_size, 0, XDCFG_NON_SECURE_PCAP_WRITE);   
-        #endif
+        if (data_size%4)
+            image_word_len = (data_size/4+1)*4;
+        else
+            image_word_len = data_size;
         
-        printf("slcr_lock...\n");
-        //printf("before lock, status: %d...\n", LockStatus());        
-        SlcrLock();
-        //printf("after lock, status: %d...\n", LockStatus());
+        printf("do_fpga(), start_addr:0x%x, imagelen:0x%x, datalength:0x%x\r\n", 
+            data_addr, image_word_len, data_size); 
         
-		/* rc = fpga_loadbitstream(dev, fpga_data, data_size); */
+		rc = PcapLoadPartition((u32*)data_addr,
+					0,
+					image_word_len,
+					data_size,
+					XDCFG_NON_SECURE_PCAP_WRITE);  
+                    
+        if(rc != FPGA_SUCCESS) 
+        {
+            printf("PCAP Bitstream Download Failed\r\n");
+            return FPGA_FAIL;
+        }
+        
+        SlcrLock();        
 		break;
         
 	case FPGA_LOADMK:
@@ -307,46 +311,6 @@ int do_fpga (cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 				rc = fpga_load (dev, (void *)data, data_size);
 			}
 			break;
-#if defined(CONFIG_FIT)
-		case IMAGE_FORMAT_FIT:
-			{
-				const void *fit_hdr = (const void *)fpga_data;
-				int noffset;
-				const void *fit_data;
-
-				if (fit_uname == NULL) {
-					puts ("No FIT subimage unit name\n");
-					return 1;
-				}
-
-				if (!fit_check_format (fit_hdr)) {
-					puts ("Bad FIT image format\n");
-					return 1;
-				}
-
-				/* get fpga component image node offset */
-				noffset = fit_image_get_node (fit_hdr, fit_uname);
-				if (noffset < 0) {
-					printf ("Can't find '%s' FIT subimage\n", fit_uname);
-					return 1;
-				}
-
-				/* verify integrity */
-				if (!fit_image_check_hashes (fit_hdr, noffset)) {
-					puts ("Bad Data Hash\n");
-					return 1;
-				}
-
-				/* get fpga subimage data address and length */
-				if (fit_image_get_data (fit_hdr, noffset, &fit_data, &data_size)) {
-					puts ("Could not find fpga subimage data\n");
-					return 1;
-				}
-
-				rc = fpga_load (dev, fit_data, data_size);
-			}
-			break;
-#endif
 		default:
 			puts ("** Unknown image type\n");
 			rc = FPGA_FAIL;
@@ -391,19 +355,8 @@ static int fpga_get_op (char *opstr)
 	return op;
 }
 
-U_BOOT_CMD (fpga, 6, 1, do_fpga,
+U_BOOT_CMD (fpga, 4, 0, do_fpga,
 	"loadable FPGA image support",
-	"[operation type] [device number] [image address] [image size]\n"
 	"fpga operations:\n"
-	"  dump\t[dev]\t\t\tLoad device to memory buffer\n"
-	"  info\t[dev]\t\t\tlist known device information\n"
-	"  load\t[dev] [address] [size]\tLoad device from memory buffer\n"
-	"  loadb\t[dev] [address] [size]\t"
-	"Load device from bitstream buffer (Xilinx only)\n"
-	"  loadmk [dev] [address]\tLoad device generated with mkimage"
-#if defined(CONFIG_FIT)
-	"\n"
-	"\tFor loadmk operating on FIT format uImage address must include\n"
-	"\tsubimage unit name in the form of addr:<subimg_uname>"
-#endif
+	"  loadb\t [address] [size]\t"
 );

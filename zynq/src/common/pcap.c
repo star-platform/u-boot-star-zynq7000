@@ -151,7 +151,7 @@ u32 PcapDataTransfer(u32 *SourceDataPtr, u32 *DestinationDataPtr,
 	XTime tXferCur = 0;
 	FsblGetGlobalTime(tXferCur);
 #endif
-
+    
 	/*
 	 * Clear the PCAP status registers
 	 */
@@ -167,7 +167,7 @@ u32 PcapDataTransfer(u32 *SourceDataPtr, u32 *DestinationDataPtr,
 	 */
 	XWdtPs_RestartWdt(&Watchdog);
 #endif
-
+    
 	/*
 	 * PCAP single DMA transfer setup
 	 */
@@ -177,6 +177,12 @@ u32 PcapDataTransfer(u32 *SourceDataPtr, u32 *DestinationDataPtr,
 	/*
 	 * Transfer using Device Configuration
 	 */
+
+    
+    fsbl_printf(DEBUG_INFO, "###PcapLoadPartition(), SourceAddr:0x%x, SourceLength:0x%x, DestinationDataPtr:0x%x, DataWordLen:0x%x, PcapTransferType:0x%x\r\n",
+           (u32)(SourceDataPtr), SourceLength, (u32)(DestinationDataPtr), DestinationLength, PcapTransferType);
+    
+    
 	Status = XDcfg_Transfer(DcfgInstPtr, (u8 *)SourceDataPtr,
 					SourceLength,
 					(u8 *)DestinationDataPtr,
@@ -185,12 +191,12 @@ u32 PcapDataTransfer(u32 *SourceDataPtr, u32 *DestinationDataPtr,
 		fsbl_printf(DEBUG_INFO,"Status of XDcfg_Transfer = %d \r \n",Status);
 		return XST_FAILURE;
 	}
-
+    
 	/*
 	 * Dump the PCAP registers
 	 */
 	PcapDumpRegisters();
-
+    
 	/*
 	 * Poll for the DMA done
 	 */

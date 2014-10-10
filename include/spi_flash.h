@@ -53,15 +53,18 @@ struct spi_flash *spi_flash_probe(unsigned int bus, unsigned int cs,
 		unsigned int max_hz, unsigned int spi_mode);
 void spi_flash_free(struct spi_flash *flash);
 
+
 static inline int spi_flash_read(struct spi_flash *flash, u32 offset,
 		size_t len, void *buf)
 {
+    /* spi_flash_cmd_read_fast */
 	return flash->read(flash, offset, len, buf);
 }
 
 static inline int spi_flash_write(struct spi_flash *flash, u32 offset,
 		size_t len, const void *buf)
 {
+    /* spi_flash_cmd_write_multi */
 	return flash->write(flash, offset, len, buf);
 }
 

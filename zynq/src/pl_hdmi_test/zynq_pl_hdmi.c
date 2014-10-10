@@ -262,12 +262,64 @@ void ddr_video_wr()
 }
 
 
+int SiI9134_i2c_config(void)
+{
+    int Status;
+    u8 ReadBuffer[2];    
+    
+    printf("######SiI9134_i2c_config()\r\n"); 
+    
+    si9134_i2c_init(IIC_DEVICE_ID);
+    
+    
+    SiI9134_write(0x39, 0x05, 0x01);        //soft reset
+    SiI9134_write(0x39, 0x05, 0x00);        //soft reset
+    SiI9134_write(0x39, 0x08, 0xfd);        //PD#=1,power on mode
+
+    SiI9134_write(0x3d, 0x2f, 0x21);        //HDMI mode enable, 24bit per pixel(8 bits per channel; no packing)
+    SiI9134_write(0x3d, 0x3e, 0x03);        //Enable AVI infoFrame transmission, Enable(send in every VBLANK period)
+    SiI9134_write(0x3d, 0x40, 0x82);
+    SiI9134_write(0x3d, 0x41, 0x02);
+    SiI9134_write(0x3d, 0x42, 0x0d);
+    SiI9134_write(0x3d, 0x43, 0xf7);
+    SiI9134_write(0x3d, 0x44, 0x10);
+    SiI9134_write(0x3d, 0x45, 0x68);
+    SiI9134_write(0x3d, 0x46, 0x00);
+    SiI9134_write(0x3d, 0x47, 0x00);
+    SiI9134_write(0x3d, 0x3d, 0x07);
+      
+    
+    
+	//display Device ID information
+    Status = SiI9134_read(0x39, 0x02, ReadBuffer);
+
+	if (Status != XST_SUCCESS)	
+    {
+		return XST_FAILURE;
+	}
+	else	
+    {
+	    printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
+	}
+
+    Status=SiI9134_read(0x39, 0x03, ReadBuffer);
+	if (Status != XST_SUCCESS)	
+    {
+		return XST_FAILURE;
+	}
+	else	
+    {
+	    printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
+	}
+    printf("done.\n\r");
+
+    return 0;
+}
+
 int HDMI_init( void )
 {
     u32 data;
-    int Status;
-    u8 ReadBuffer[2];
-    int i2c_device_id;
+    
     
     /*for logicvc,*/
     ddr_video_wr();
@@ -298,53 +350,7 @@ int HDMI_init( void )
     Xil_Out32((CFV_BASEADDR + 0x04), 0x00000002);                       //bit2=0: disable test pattern,Bypass the CSC, Video output disable
     Xil_Out32((CFV_BASEADDR + 0x04), 0x00000003);                       //Video output enable
 
+    SiI9134_i2c_config();
 
-    i2c_device_id = IIC_DEVICE_ID;
-    
-	printf("hdmi enable, i2c device id:0x%x\n", i2c_device_id);
-    
-    si9134_i2c_init(i2c_device_id);
-    
-    
-    SiI9134_write(0x39, 0x05, 0x01);        //soft reset
-    SiI9134_write(0x39, 0x05, 0x00);        //soft reset
-    SiI9134_write(0x39, 0x08, 0xfd);        //PD#=1,power on mode
-
-    SiI9134_write(0x3d, 0x2f, 0x21);        //HDMI mode enable, 24bit per pixel(8 bits per channel; no packing)
-    SiI9134_write(0x3d, 0x3e, 0x03);        //Enable AVI infoFrame transmission, Enable(send in every VBLANK period)
-    SiI9134_write(0x3d, 0x40, 0x82);
-    SiI9134_write(0x3d, 0x41, 0x02);
-    SiI9134_write(0x3d, 0x42, 0x0d);
-    SiI9134_write(0x3d, 0x43, 0xf7);
-    SiI9134_write(0x3d, 0x44, 0x10);
-    SiI9134_write(0x3d, 0x45, 0x68);
-    SiI9134_write(0x3d, 0x46, 0x00);
-    SiI9134_write(0x3d, 0x47, 0x00);
-    SiI9134_write(0x3d, 0x3d, 0x07);
-      
-    
-    
-	//display Device ID information
-    Status=SiI9134_read(0x39, 0x02, ReadBuffer);
-
-	if (Status != XST_SUCCESS)	
-    {
-		return XST_FAILURE;
-	}
-	else	
-    {
-	    printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
-	}
-
-    Status=SiI9134_read(0x39, 0x03, ReadBuffer);
-	if (Status != XST_SUCCESS)	
-    {
-		return XST_FAILURE;
-	}
-	else	
-    {
-	    printf("Read Device ID of (%d)\n\r", ReadBuffer[0]);
-	}
-    printf("done.\n\r");
     return 0;
 }

@@ -81,6 +81,9 @@ extern void dataflash_print_info(void);
 #include <i2c.h>
 #endif
 
+extern int SiI9134_i2c_config(void);
+
+
 /************************************************************************
  * Coloured LED functionality
  ************************************************************************
@@ -657,8 +660,9 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
         /* add by star-star */
         usb_phy_init();
-#if 0
-        si9134_i2c_init();
+#if 1
+        
+        SiI9134_i2c_config();
 #endif
     
 	/* main_loop() can return to retry autoboot, if so just run it again. */

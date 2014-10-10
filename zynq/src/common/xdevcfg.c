@@ -751,7 +751,7 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 	Xil_AssertNonvoid(InstancePtr != NULL);
 	Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
 
-
+    
 	if (XDcfg_IsDmaBusy(InstancePtr) == XST_SUCCESS) {
 		return XST_DEVICE_BUSY;
 	}
@@ -763,7 +763,8 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 			& XDCFG_STATUS_PCFG_INIT_MASK) == 0){
 			return XST_FAILURE;
 	}
-
+        
+    
 	if ((TransferType == XDCFG_SECURE_PCAP_WRITE) ||
 		(TransferType == XDCFG_NON_SECURE_PCAP_WRITE)) {
 
@@ -771,7 +772,7 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 		if ((!SourcePtr) || (SrcWordLength == 0)) {
 			return XST_INVALID_PARAM;
 		}
-
+        
 		if (TransferType == XDCFG_NON_SECURE_PCAP_WRITE){
 
 			/*
@@ -801,7 +802,7 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 						(XDCFG_CTRL_PCFG_AES_EN_MASK |
 						XDCFG_CTRL_PCAP_RATE_EN_MASK));
 		}
-
+        
 		XDcfg_InitiateDma(InstancePtr, (u32)SourcePtr,
 				(u32)DestPtr, SrcWordLength, DestWordLength);
 
@@ -835,7 +836,7 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 			(!DestPtr) || (DestWordLength == 0)) {
 			return XST_INVALID_PARAM;
 		}
-
+        
 		if (TransferType == XDCFG_CONCURRENT_NONSEC_READ_WRITE){
 
 			/*
@@ -844,12 +845,12 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 			 */
 			CtrlReg = XDcfg_ReadReg(InstancePtr->Config.BaseAddr,
 						XDCFG_CTRL_OFFSET);
-
+            
 			XDcfg_WriteReg(InstancePtr->Config.BaseAddr,
 					XDCFG_CTRL_OFFSET, (CtrlReg &
 					~(XDCFG_CTRL_PCFG_AES_EN_MASK |
 					  XDCFG_CTRL_PCAP_RATE_EN_MASK)));
-
+        
 		}
 		if (TransferType == XDCFG_CONCURRENT_SECURE_READ_WRITE) {
 
@@ -862,7 +863,7 @@ u32 XDcfg_Transfer(XDcfg *InstancePtr,
 					(XDCFG_CTRL_PCFG_AES_EN_MASK |
 					XDCFG_CTRL_PCAP_RATE_EN_MASK));
 		}
-
+        
 		XDcfg_InitiateDma(InstancePtr, (u32)SourcePtr, SrcWordLength,
 					(u32)DestPtr, DestWordLength);
 	}

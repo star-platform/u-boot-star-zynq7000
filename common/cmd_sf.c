@@ -219,7 +219,7 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 		puts("Failed to map physical memory\n");
 		return 1;
 	}
-
+    
 	if (strcmp(argv[0], "update") == 0)
 		ret = spi_flash_update(flash, offset, len, buf);
 	else if (strcmp(argv[0], "read") == 0)
@@ -234,14 +234,12 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 			    printf("%x ",((char *)buf)[i]);
 			}
 			printf("\n");
-
+            
 			for(i = PRT_IMAGE;i<PRT_IMAGE+prt_len;i++)
 			{
 			    printf("%x ",((char *)buf)[i]);
 			}			
 			printf("\n");
-
-			serial_puts("lihaotest,hehehe!");
 		}
 		if(0x01000000 == (unsigned long)buf)  //devtree
 		{
@@ -261,7 +259,7 @@ static int do_spi_flash_read_write(int argc, char * const argv[])
 	}
 	else
 		ret = spi_flash_write(flash, offset, len, buf);
-
+    
 	unmap_physmem(buf, len);
 
 	if (ret) {
