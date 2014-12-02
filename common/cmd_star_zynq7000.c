@@ -70,12 +70,13 @@ enum {
 	PS_I2C_EEPROM_TEST,
 	PS_I2C_RTC_TEST,
 	/* PL part */
-    PL_GPIO_LED_TEST = 10,
+    PL_GPIO_LED_TEST = 100,
     PL_GPIO_KEY_TEST,
     PL_AUDIO_TEST,
     PL_VGA_TEST,
-    PL_OLED_TEST,
     PL_HDMI_TEST,
+    /* ************************************************/    
+    PL_OLED_TEST,
     SCU_GIC_SELF_TEST,
     SCU_GIC_INT_SETUP,
     /* EMAC_PS_INT_TEST */
@@ -102,6 +103,9 @@ char *opnum2opstr(int op_num)
 	case PS_MEMORY_TEST:
 		strncpy(tmp_op, "PS_Memory_test", 100);
 		break;
+    case PS_UART_TEST:
+		strncpy(tmp_op, "PS_UART_test", 100);
+        break;
     case PS_SD_TEST:
 		strncpy(tmp_op, "PS_SD_test", 100);
         break;    
@@ -120,10 +124,26 @@ char *opnum2opstr(int op_num)
     case PS_I2C_RTC_TEST:        
         strncpy(tmp_op, "PS_I2C_RTC_Test", 100);
         break;
-  
+
+    /* PL partion */
+    case PL_GPIO_LED_TEST:        
+        strncpy(tmp_op, "PL_GPIO_LED_Test", 100);
+        break;
+    case PL_GPIO_KEY_TEST:        
+        strncpy(tmp_op, "PL_GPIO_KEY_Test", 100);
+        break;
+    case PL_AUDIO_TEST:        
+        strncpy(tmp_op, "PL_AUDIO_Test", 100);
+        break;
     case PL_VGA_TEST:
         strncpy(tmp_op, "PL_VGA_test", 100);
         break;
+    case PL_HDMI_TEST:
+        strncpy(tmp_op, "PL_VGA_test", 100);
+        break;
+
+  	
+	
     case IIC0_PS_SELF_TEST:        
 		strncpy(tmp_op, "I2C0_self_test", 100);
         break;
@@ -134,25 +154,12 @@ char *opnum2opstr(int op_num)
 
     case QSPI_PS_SELF_TEST:       
 		strncpy(tmp_op, "QSPI_self_test", 100);
-        break;
-        
+        break;     
     case SCU_TIMER_POLL_TEST:        
 		strncpy(tmp_op, "Scu_Timer_Poll_test", 100);
         break;
-    case PL_GPIO_KEY_TEST:
-        strncpy(tmp_op, "PL_Gpio_Key_test", 100);
-        break;
-    case PL_AUDIO_TEST:
-        strncpy(tmp_op, "PL_Audio_test", 100);
-        break;
     case PL_OLED_TEST:        
         strncpy(tmp_op, "OLED_Test", 100);
-        break;
-    case PL_HDMI_TEST:        
-		strncpy(tmp_op, "HDMI_Test", 100);
-        break;
-    case PL_GPIO_LED_TEST:        
-		strncpy(tmp_op, "PL_GPIO_LED_Test", 100);
         break;
 	default:
 		printf("invalid zynq verification operation\n");
@@ -274,7 +281,7 @@ struct memory_range_s memory_ranges[] = {
     #endif
 };
 
-int n_memory_ranges = 16;
+int n_memory_ranges = 15;
 
 
 void test_memory_range(struct memory_range_s *range) {
@@ -294,11 +301,22 @@ void test_memory_range(struct memory_range_s *range) {
     printf("    Memory Controller: %s\r", range->ip);
     printf("         Base Address: 0x%x\r\n", range->base);
     printf("                 Size: 0x%x\r\n", range->size);
+	
+    status = Xil_TestMem32((u32*)range->base, 1024, 0xAAAA5555, XIL_TESTMEM_ALLMEMTESTS);
+    printf("          32-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
     
+    
+    status = Xil_TestMem16((u16*)range->base, 2048, 0xAA55, XIL_TESTMEM_ALLMEMTESTS);
+    printf("          16-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
+    
+    status = Xil_TestMem8((u8*)range->base, 4096, 0xA5, XIL_TESTMEM_ALLMEMTESTS);
+    printf("          8-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
+
+    #if 0
     status = Xil_TestMem32((u32*)range->base, range->size, 0xAAAA5555, XIL_TESTMEM_ALLMEMTESTS);
     printf("          32-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
     
-    #if 0
+    
     status = Xil_TestMem16((u16*)range->base, 2048, 0xAA55, XIL_TESTMEM_ALLMEMTESTS);
     printf("          16-bit test: %s\r\n", status == XST_SUCCESS? "PASSED!":"FAILED!");
     
@@ -372,7 +390,7 @@ int zynq_ps_memory_test()
     printf("NOTE: This application runs with D-Cache disabled.");
     printf("As a result, cacheline requests will not be generated\n\r");
 
-    for (i = 13; i < n_memory_ranges; i++) 
+    for (i = 0; i < n_memory_ranges; i++) 
     {
         test_memory_range(&memory_ranges[i]);
     }
@@ -584,6 +602,7 @@ int zynq_pl_gpio_led_test(void)
 
 void zynq_pl_gpio_key_test()
 {
+    printf("\r\n");
     printf("---Starting PL GPIO Key Test Application---\n\r");
     pl_gpio_key_init();
     printf("---PL GPIO Key Test Application Complete--\n\r");
@@ -918,23 +937,24 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
 	return 0;
 }
 
+
 U_BOOT_CMD (star_zynq7000_example, 3, 1, do_star_zynq7000_example,
 	"verify star-zynq7000 board function",
 	"[do_zynq_verify] [number]\n"
 	"zynq verify operations no:operation\n"
-	"  1\t  PS GPIO LED test\n"
-	"  2\t  PS Memory test\n"
-	"  3\t  PS SD test\n"
-	"  4\t  PS QSPI test\n"
-	"  5\t  PS USB test\n"
-	"  6\t  PS GMAC test\n"
-	"  5\t  I2C0 test\n"
-	"  6\t  I2C1 test\n"
-	"  7\t  QSPI test\n"
-	"  8\t  Scu Timer Poll test\n"
-    "  9\t  OLED test\n"
-    "  10\t HDMI test\n"    
-    "  11\t I2C EEPROM test\n"
-    "  12\t PL LED test\n"
+	"  1\t  	PS GPIO LED test\n"
+	"  2\t  	PS Memory test\n"
+	"  3\t  	PS UART test\n"
+	"  4\t  	PS SD test\n"
+	"  5\t  	PS QSPI test\n"
+	"  6\t  	PS USB test\n"
+	"  7\t  	PS GMAC test\n"
+	"  8\t  	PS I2C EEPROM test\n"
+	"  9\t  	PS I2C RTC test\n"
+	"  100\t	PL GPIO LED test\n"
+	"  101\t  	PL GPIO KEY test\n"
+    "  102\t  	PL Audio test\n"
+    "  103\t 	PL VGA test\n"    
+    "  104\t 	PL HDMI test\n"
 );
 

@@ -40,6 +40,7 @@
 #include <malloc.h>
 #include "xiicps.h"
 #include "i2c.h"
+#include "ff.h"
 
 #define IIC_DEVICE_ID	XPAR_XIICPS_1_DEVICE_ID
 #define INTC_DEVICE_ID	XPAR_SCUGIC_SINGLE_DEVICE_ID
@@ -79,11 +80,12 @@
 #define V_DE_MAX (V_WIDTH+V_BP+V_ACTIVE)
 #define VIDEO_LENGTH  (H_ACTIVE*V_ACTIVE)
 #define AUDIO_LENGTH  (A_SAMPLE_FREQ/A_FREQ)
-#define VIDEO_BASEADDR DDR_BASEADDR + 0x2000000
-#define AUDIO_BASEADDR DDR_BASEADDR + 0x1000000
+#define VIDEO_BASEADDR DDR_BASEADDR + 0x02000000
+#define AUDIO_BASEADDR DDR_BASEADDR + 0x01000000
+#define DATA_READ_ADDR DDR_BASEADDR + 0x03000000;
 
 XIicPs Iic1Instance;		/* The instance of the IIC device. */
-
+int g_image_len = 0;
 
 int si9134_i2c_init(int i2c_id)
 {
@@ -237,18 +239,80 @@ int SiI9134_read(u8 dev_id, u8 raddr, u8 ReadBuffer[])
 
 
 
-
+void open_hdmi_pic()
+{
+	
+    FRESULT rc;
+    static char buffer[80] = "star.bin";
+    char *boot_file = buffer;   
+    static FIL fil;     /* File object */
+    static FATFS fatfs;
+    UINT br;
+    u32 SourceAddress = 0;
+	u32 LengthBytes = 8192;
+    u32 Data_read_addr = DATA_READ_ADDR;
+    u32 Data_read_Begin_addr = Data_read_addr;
+    /* Register volume work area, initialize device */
+    rc = f_mount(0, &fatfs);
+    
+    printf("read hdmi pic, SD: rc= %.8x\n\r", rc);
+   	    
+    if (rc != FR_OK) {
+        return XST_FAILURE;
+    }
+    
+    rc = f_open(&fil, buffer, FA_READ);
+    if (rc) 
+    {
+        printf("SD: Unable to open file %s: %d\n", boot_file, rc);
+        return XST_FAILURE;
+    }
+	
+	do
+	{
+	    rc = f_lseek(&fil, SourceAddress);
+	    if (rc) 
+	    {
+	        printf("SD: Unable to seek to %x\n", SourceAddress);
+	        return XST_FAILURE;
+	    }
+	    
+	    rc = f_read(&fil, (void*)Data_read_addr, LengthBytes, &br);               
+	    if (rc) 
+	    {
+	        printf("*** ERROR: f_read returned %d\r\n", rc);
+	    }
+        
+        printf("***Data_read_addr:0x%x, br:0x%x\r\n", Data_read_addr, br);
+        printf("***read data:0x%x, 0x%x, 0x%x, 0x%x\r\n", 
+            *((u32*)(Data_read_addr)), *((u32*)(Data_read_addr+1)), *((u32*)(Data_read_addr+2)), *((u32*)(Data_read_addr+3)));
+        
+	    SourceAddress += br;
+	    Data_read_addr += (br/4);
+	   	g_image_len += br;
+        
+	}while(br == LengthBytes);
+    
+	printf("image len:%d\r\n", g_image_len);
+    
+}
 
 
 
 void ddr_video_wr() 
 {
-
+	
     u32 n;
     u32 d;
     u32 dcnt;
-    
+    u32 read_image_data = DATA_READ_ADDR;
     dcnt = 0;
+	#if 0
+    open_hdmi_pic();
+	printf("%x, %x, %x, %x\r\n", 
+        *((u32*)(read_image_data)), *((u32*)(read_image_data+1)), *((u32*)(read_image_data+2)), *((u32*)(read_image_data+3)));
+	#endif
+    #if 1
     printf("DDR write: started (length %d)\n\r", IMG_LENGTH);
     for (n = 0; n < IMG_LENGTH; n++) 
     {
@@ -258,6 +322,7 @@ void ddr_video_wr()
             dcnt = dcnt + 1;
         }
     }
+    #endif
     printf("DDR write: completed (total %d)\n\r", dcnt);
 }
 

@@ -510,7 +510,9 @@ static BYTE dma_trans_cmpl(void)
 		/*
 		 * Check for Transfer complete
 		 */
-        if (status & SD_INT_TRNS_CMPL) {
+        if (status & SD_INT_TRNS_CMPL) 
+        {
+            printk("######dma_trans_cmpl(), tarnsfer complete\r\n");
         	sd_out32(SD_INT_STAT_R, SD_INT_TRNS_CMPL);
         	break;
         }
