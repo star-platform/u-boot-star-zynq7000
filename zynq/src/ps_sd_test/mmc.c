@@ -502,7 +502,7 @@ static BYTE dma_trans_cmpl(void)
 	while (1) {
 		status = sd_in32(SD_INT_STAT_R);
 		if (status & SD_INT_ERROR) {
-			fsbl_printf(DEBUG_GENERAL,"dma_trans_cmpl: Error: (0x%08x)\r\n",
+			fsbl_printf(DEBUG_GENERAL, "dma_trans_cmpl: Error: (0x%08x)\r\n",
 								status);
 			return 0;
 		}
@@ -512,7 +512,7 @@ static BYTE dma_trans_cmpl(void)
 		 */
         if (status & SD_INT_TRNS_CMPL) 
         {
-            printk("######dma_trans_cmpl(), tarnsfer complete\r\n");
+            fsbl_printf(DEBUG_GENERAL, "######dma_trans_cmpl(), tarnsfer complete\r\n");
         	sd_out32(SD_INT_STAT_R, SD_INT_TRNS_CMPL);
         	break;
         }
