@@ -765,7 +765,7 @@ void PL_OLED_Test()
 }
 
 
-void PL_HDMI_Test()
+void zynq_pl_hdmi_test()
 {
     printf("--Starting HDMI Test Application--\n\r");
     HDMI_init();
@@ -775,7 +775,7 @@ void PL_HDMI_Test()
 }
 
 
-void PL_VGA_Test()
+void zynq_pl_vga_test()
 {
     printf("--Starting VGA Test Application--\n\r");
     pl_vga_init();
@@ -895,10 +895,10 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
         zynq_pl_audio_test();
         break;
     case PL_VGA_TEST:
-        PL_VGA_Test();
+        zynq_pl_vga_test();
         break;
     case PL_HDMI_TEST:
-        PL_HDMI_Test();
+        zynq_pl_hdmi_test();
         break;
         
     case SCU_GIC_SELF_TEST:
