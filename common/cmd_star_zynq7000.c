@@ -139,11 +139,9 @@ char *opnum2opstr(int op_num)
         strncpy(tmp_op, "PL_VGA_test", 100);
         break;
     case PL_HDMI_TEST:
-        strncpy(tmp_op, "PL_VGA_test", 100);
+        strncpy(tmp_op, "PL_HDMI_test", 100);
         break;
-
-  	
-	
+		
     case IIC0_PS_SELF_TEST:        
 		strncpy(tmp_op, "I2C0_self_test", 100);
         break;
