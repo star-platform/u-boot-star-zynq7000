@@ -811,7 +811,6 @@ int zynq_ps_I2c_eeprom_test(int sub_opt_num)
     u8 writebuf[9] = {0x00, 0xC0, 0xFD, 0x03, 0x0F, 0x00, 0x00, 0x00, 0x00};
 	u8 readbuf[8] = {0};
     
-    printf("--Starting EEPROM Test Application--\n\r");
 	IicPsEepromPolledInit();
 	/*
 	 * Run the Iic EEPROM Polled Mode example.
@@ -819,12 +818,15 @@ int zynq_ps_I2c_eeprom_test(int sub_opt_num)
 	switch (sub_opt_num)
     {
 		case -1:
+            
+            printf("---Starting EEPROM Test Application---\n\r");
             Status = IicPsEepromPolledExample();
             if (Status != XST_SUCCESS) 
             {
                 printf("IIC EEPROM Polled Mode Example Test Failed\r\n");
                 return XST_FAILURE;
             }
+            printf("--EEPROM Test Application Complete--\n\r");
         break;
         case 1:
             /* erase the EEPROM */
@@ -842,14 +844,17 @@ int zynq_ps_I2c_eeprom_test(int sub_opt_num)
             }
             break;
         case 2:
+            printf("EEPROM write data......\r\n");
             Status = IicPsEepromWrite(writebuf, 9);
 			if (Status != XST_SUCCESS) 
 			{
 			  printf("IIC EEPROM Check data Failed\r\n");
 			  return XST_FAILURE;
 			}
+            printf("EEPROM write data complete\r\n");
             break;
         case 3:
+            printf("EEPROM read data:");
             Status = IicPsEepromRead(readbuf, writebuf, 8);
 			if (Status != XST_SUCCESS) 
 			{
@@ -857,11 +862,18 @@ int zynq_ps_I2c_eeprom_test(int sub_opt_num)
 			  return XST_FAILURE;
 			}
             break;
+        case 4:
+            Status = IicPsCheckEepromData();
+            if (Status != XST_SUCCESS) 
+            {
+                printf("IIC EEPROM Check data Failed\r\n");
+                return XST_FAILURE;
+            }
+            break;
         default:
             printf("input para error\r\n");
             break;        
     }
-    printf("--EEPROM Test Application Complete--\n\r");
 	return XST_SUCCESS;
 }
 
@@ -894,6 +906,7 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
         sub_op_num = simple_strtoul (argv[2], NULL, 10);
         op_str = opnum2opstr(op_num);
 		printf("%s: op_num: %d, sub_op_num:%d, operation:%s\n", __func__, op_num, sub_op_num, op_str);
+        break;
 	default:
 		debug("%s: Too many or too few args (%d)\n",__func__, argc);
         op_num = -1;

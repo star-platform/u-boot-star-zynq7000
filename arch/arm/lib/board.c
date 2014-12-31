@@ -660,7 +660,7 @@ void board_init_r(gd_t *id, ulong dest_addr)
 
         /* add by star-star */
         usb_phy_init();
-#if 1   
+#if 0   
         SiI9134_i2c_config();
 #endif
     
