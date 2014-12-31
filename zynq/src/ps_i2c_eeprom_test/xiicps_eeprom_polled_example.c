@@ -103,18 +103,20 @@
 
 
 #define IIC_MUX_ADDRESS 	0x74
-
-/*
- * The page size determines how much data should be written at a time.
- * The write function should be called with this as a maximum byte count.
- */
-#define PAGE_SIZE		8
-
+/* 2K size */
+#define PAGE_SIZE			0x800 
 /*
  * The Starting address in the IIC EEPROM on which this test is performed.
  */
-#define EEPROM_START_ADDRESS	128
+#define EEPROM_START_ADDRESS	0
 
+/*
+ * The write data size determines how much data should be written at a time.
+ * The write function should be called with this as a maximum byte count.
+ */
+#define WRITE_DATA_SIZE  8
+#define READ_DATA_SIZE   8
+#define WRITE_EEPROM_START_ADDRESS 128
 /**************************** Type Definitions *******************************/
 
 /*
@@ -126,11 +128,14 @@ typedef u8 AddressType;
 /***************** Macros (Inline Functions) Definitions *********************/
 
 /************************** Function Prototypes ******************************/
-
+int IicPsEepromWrite(u8 *pwriteBuf, u32 size);
+int IicPsEepromErase(void);
 int IicPsEepromPolledExample(void);
+int IicPsEepromPolledInit(void);
 int EepromWriteData(u8* pWriteBuffer, u16 ByteCount);
 int MuxInit(void);
 int EepromReadData(u8 *pReadBufferPtr, u8*pWriteBufPtr, u16 ByteCount);
+
 
 /************************** Variable Definitions *****************************/
 
@@ -142,6 +147,149 @@ XIicPs IicInstance;		/* The instance of the IIC device. */
 
 
 /************************** Function Definitions *****************************/
+
+
+
+int IicPsEepromPolledInit(void)
+{
+	XIicPs_Config *ConfigPtr;	/* Pointer to configuration data */
+
+	int Status;
+
+	/*
+	 * Initialize the IIC driver so that it is ready to use.
+	 */
+	ConfigPtr = XIicPs_LookupConfig(IIC_DEVICE_ID);
+	if (ConfigPtr == NULL) 
+    {
+		return XST_FAILURE;
+	}
+    
+	Status = XIicPs_CfgInitialize(&IicInstance, ConfigPtr,
+					ConfigPtr->BaseAddress);
+	if (Status != XST_SUCCESS) 
+    {
+		return XST_FAILURE;
+	}
+	
+	/*
+	 * Set the IIC serial clock rate.
+	 */
+	XIicPs_SetSClk(&IicInstance, IIC_SCLK_RATE);
+
+	return 0;
+}
+
+
+int IicPsEepromWrite(u8 *pwriteBuf, u32 size)
+{
+	u32 i,j;
+    u8 ReadBuffer[WRITE_DATA_SIZE]; /* Read buffer for reading a page. */
+    int Status;
+    int left_write_data = PAGE_SIZE;
+	/*
+	 * Write to the EEPROM.
+	 */
+	Status = EepromWriteData(pwriteBuf, size);
+	if (Status != XST_SUCCESS) 
+    {
+		return XST_FAILURE;
+	}
+	return Status;
+}
+
+
+int IicPsEepromRead(u8 *pReadBuf, u8 *pWriteBuf, u32 size)
+{
+    int Status;
+	/*
+	 * Write to the EEPROM.
+	 */
+	Status = EepromReadData(pReadBuf, pWriteBuf, size);
+	if (Status != XST_SUCCESS) 
+    {
+		return XST_FAILURE;
+	}
+	return Status;
+}
+
+
+
+int IicPsCheckEepromData(void)
+{
+	AddressType Address = EEPROM_START_ADDRESS;    
+    u8 ReadBuffer[READ_DATA_SIZE]; /* Read buffer for reading a page. */
+    int Status;
+    u8 WriteBuffer = Address;
+    int i = 0, j;
+	/*
+	 * Read from the EEPROM.
+	 */
+	printf("check the first 16 bytes value:\r\n");
+    for (i = 0; i < 2; i++)
+	{
+		Status = EepromReadData(ReadBuffer, &WriteBuffer, READ_DATA_SIZE);
+		if (Status != XST_SUCCESS) 
+		{
+			return XST_FAILURE;
+		}
+        for (j = 0; j < READ_DATA_SIZE; j++)
+        	printf("%d , ", ReadBuffer[j]);
+        WriteBuffer += READ_DATA_SIZE;
+	}
+    printf("\r\n");
+
+	printf("check the last 16 bytes value:\r\n");
+    WriteBuffer = PAGE_SIZE - 2 * READ_DATA_SIZE;
+	for (i = 0; i < 2; i++)
+	{
+	    Status = EepromReadData(ReadBuffer, &WriteBuffer, READ_DATA_SIZE);
+	    if (Status != XST_SUCCESS) 
+	    {
+	        return XST_FAILURE;
+	    }
+	    for (j = 0; j < READ_DATA_SIZE; j++)
+	        printf("%d , ", ReadBuffer[j]);
+	    WriteBuffer += READ_DATA_SIZE;
+	}
+	printf("\r\n");    
+    return Status;
+}
+
+int IicPsEepromErase(void)
+{
+	
+	u32 i,j;
+	AddressType Address = EEPROM_START_ADDRESS;
+    u8 WriteBuffer[sizeof(AddressType) + WRITE_DATA_SIZE];
+    u8 ReadBuffer[WRITE_DATA_SIZE]; /* Read buffer for reading a page. */
+    int Status;
+    int left_write_data = PAGE_SIZE;
+	/*
+	 * Initialize the data to write and the read buffer.
+	 */
+	do
+    {    
+		WriteBuffer[0] = (u8) (Address);
+
+		for (i = 0; i < WRITE_DATA_SIZE; i++) 
+	    {
+			WriteBuffer[sizeof(Address) + i] = 0xFF;
+		}
+		    
+		/*
+		 * Write to the EEPROM.
+		 */
+		Status = EepromWriteData(WriteBuffer, sizeof(Address) + WRITE_DATA_SIZE);
+		if (Status != XST_SUCCESS) 
+	    {
+			return XST_FAILURE;
+		}
+		Address += WRITE_DATA_SIZE;
+        left_write_data -= WRITE_DATA_SIZE;
+    }while(left_write_data > 0);
+	return 0;
+}
 
 
 /*****************************************************************************/
@@ -159,12 +307,15 @@ XIicPs IicInstance;		/* The instance of the IIC device. */
 int IicPsEepromPolledExample(void)
 {
 	u32 Index;
-	int Status;
-	XIicPs_Config *ConfigPtr;	/* Pointer to configuration data */
-	AddressType Address = EEPROM_START_ADDRESS;
+	AddressType Address = WRITE_EEPROM_START_ADDRESS;
+    int Status;
     
-    u8 WriteBuffer[sizeof(AddressType) + PAGE_SIZE];
-    u8 ReadBuffer[PAGE_SIZE]; /* Read buffer for reading a page. */
+    u8 WriteBuffer[sizeof(AddressType) + WRITE_DATA_SIZE];
+    u8 ReadBuffer[WRITE_DATA_SIZE]; /* Read buffer for reading a page. */
+    
+#if 0
+	XIicPs_Config *ConfigPtr;	/* Pointer to configuration data */
+	int Status;
 	/*
 	 * Initialize the IIC driver so that it is ready to use.
 	 */
@@ -180,21 +331,12 @@ int IicPsEepromPolledExample(void)
     {
 		return XST_FAILURE;
 	}
-
+	
 	/*
 	 * Set the IIC serial clock rate.
 	 */
 	XIicPs_SetSClk(&IicInstance, IIC_SCLK_RATE);
-    
-	/*
-	 * Set the channel value in IIC Mux.
-	 */
-#if 0
-	Status = MuxInit();
-	if (Status != XST_SUCCESS) {
-		return XST_FAILURE;
-	}
-#endif
+#endif    
 	/*
 	 * Initialize the data to write and the read buffer.
 	 */
@@ -208,7 +350,7 @@ int IicPsEepromPolledExample(void)
 		WriteBuffer[1] = (u8) (Address);
 	}
     
-	for (Index = 0; Index < PAGE_SIZE; Index++) 
+	for (Index = 0; Index < WRITE_DATA_SIZE; Index++) 
     {
 		WriteBuffer[sizeof(Address) + Index] = 0xFF;
 		ReadBuffer[Index] = 0;
@@ -217,7 +359,7 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Write to the EEPROM.
 	 */
-	Status = EepromWriteData(WriteBuffer, sizeof(Address) + PAGE_SIZE);
+	Status = EepromWriteData(WriteBuffer, sizeof(Address) + WRITE_DATA_SIZE);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -225,7 +367,8 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Read from the EEPROM.
 	 */
-	Status = EepromReadData(ReadBuffer, WriteBuffer, PAGE_SIZE);
+	WriteBuffer[0] = WRITE_EEPROM_START_ADDRESS;
+	Status = EepromReadData(ReadBuffer, WriteBuffer, WRITE_DATA_SIZE);
 	if (Status != XST_SUCCESS) 
     {
 		return XST_FAILURE;
@@ -234,7 +377,7 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Verify the data read against the data written.
 	 */
-	for (Index = 0; Index < PAGE_SIZE; Index++) 
+	for (Index = 0; Index < WRITE_DATA_SIZE; Index++) 
     {
 		if (ReadBuffer[Index] != WriteBuffer[Index + sizeof(Address)]) 
         {
@@ -243,7 +386,7 @@ int IicPsEepromPolledExample(void)
         
 		ReadBuffer[Index] = 0;
 	}
-
+		
 	/*
 	 * Initialize the data to write and the read buffer.
 	 */
@@ -258,7 +401,7 @@ int IicPsEepromPolledExample(void)
 		ReadBuffer[Index] = 0;
 	}
     
-	for (Index = 0; Index < PAGE_SIZE; Index++) 
+	for (Index = 0; Index < WRITE_DATA_SIZE; Index++) 
     {
 		WriteBuffer[sizeof(Address) + Index] = Index + 10;
 		ReadBuffer[Index] = 0;
@@ -267,12 +410,12 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Write to the EEPROM.
 	 */
-	Status = EepromWriteData(WriteBuffer, sizeof(Address) + PAGE_SIZE);
+	Status = EepromWriteData(WriteBuffer, sizeof(Address) + WRITE_DATA_SIZE);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
     printf("******I2C EEPROM write data:\r\n");
-	for (Index = 0; Index < PAGE_SIZE; Index++) 
+	for (Index = 0; Index < WRITE_DATA_SIZE; Index++) 
     {
         printf("%d  ", WriteBuffer[Index + sizeof(Address)]);
     }   
@@ -280,14 +423,16 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Read from the EEPROM.
 	 */
-	Status = EepromReadData(ReadBuffer, WriteBuffer, PAGE_SIZE);
+	 
+	WriteBuffer[0] = WRITE_EEPROM_START_ADDRESS;
+	Status = EepromReadData(ReadBuffer, WriteBuffer, WRITE_DATA_SIZE);
 	if (Status != XST_SUCCESS) 
     {
 		return XST_FAILURE;
 	}
     
     printf("******I2C EEPROM read data:\r\n");
-	for (Index = 0; Index < PAGE_SIZE; Index++) 
+	for (Index = 0; Index < WRITE_DATA_SIZE; Index++) 
     {
         printf("%d  ", ReadBuffer[Index]);
     }   
@@ -296,7 +441,7 @@ int IicPsEepromPolledExample(void)
 	/*
 	 * Verify the data read against the data written.
 	 */
-	for (Index = 0; Index < PAGE_SIZE; Index++) 
+	for (Index = 0; Index < WRITE_DATA_SIZE; Index++) 
     {
 		if (ReadBuffer[Index] != WriteBuffer[Index + sizeof(Address)]) 
         {
@@ -319,7 +464,7 @@ int IicPsEepromPolledExample(void)
 * @return	XST_SUCCESS if successful else XST_FAILURE.
 *
 * @note		The Byte count should not exceed the page size of the EEPROM as
-*		noted by the constant PAGE_SIZE.
+*		noted by the constant WRITE_DATA_SIZE.
 *
 ******************************************************************************/
 int EepromWriteData(u8* pWriteBuffer, u16 ByteCount)
@@ -364,21 +509,9 @@ int EepromWriteData(u8* pWriteBuffer, u16 ByteCount)
 int EepromReadData(u8 *pReadBufferPtr, u8*pWriteBufPtr, u16 ByteCount)
 {
 	int Status;
-	AddressType Address = EEPROM_START_ADDRESS;
+	AddressType Address = WRITE_EEPROM_START_ADDRESS;
     
-	/*
-	 * Position the Pointer in EEPROM.
-	 */
-	if (sizeof(Address) == 1) 
-    {
-        *pWriteBufPtr = (u8)(Address);
-	}
-	else 
-    {
-        *pWriteBufPtr = (u8)(Address >> 8);
-        *(pWriteBufPtr+1) = (u8)(Address);
-	}
-    
+	    
 	Status = EepromWriteData(pWriteBufPtr, sizeof(Address));
 	if (Status != XST_SUCCESS) 
     {

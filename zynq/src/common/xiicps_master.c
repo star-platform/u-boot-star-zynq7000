@@ -288,7 +288,7 @@ int XIicPs_MasterSendPolled(XIicPs *InstancePtr, u8 *MsgPtr,
 		 */
 		TransmitFifoFill(InstancePtr);
 	}
-
+	
 	/*
 	 * Check for completion of transfer.
 	 */
