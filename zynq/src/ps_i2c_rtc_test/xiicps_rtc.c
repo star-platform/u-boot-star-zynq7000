@@ -102,7 +102,7 @@
 *
 *******************************************************************************/
 
-int zynq_ps_I2c_rtc_test(void)
+int zynq_ps_i2c_rtc_test(void)
 {
 	int Status;
     u8 ctrl_stat_1, ctrl_stat_2;

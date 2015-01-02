@@ -537,7 +537,7 @@ int zynq_ps_usb_test()
     return 0;
 }
 
-int zynq_ps_Gmac_test()
+int zynq_ps_gmac_test()
 {
     int Status;
     char *server_ip;
@@ -804,7 +804,7 @@ void PL_Sil9134_config()
 * @note		None.
 *
 ******************************************************************************/
-int zynq_ps_I2c_eeprom_test(int sub_opt_num)
+int zynq_ps_i2c_eeprom_test(int sub_opt_num)
 {
 	int Status;
     
@@ -935,13 +935,13 @@ int do_star_zynq7000_example (cmd_tbl_t * cmdtp, int flag, int argc, char * cons
         zynq_ps_usb_test();
         break;
     case PS_GMAC_TEST:
-        zynq_ps_Gmac_test();
+        zynq_ps_gmac_test();
         break;
     case PS_I2C_EEPROM_TEST:
-        zynq_ps_I2c_eeprom_test(sub_op_num);
+        zynq_ps_i2c_eeprom_test(sub_op_num);
         break;
     case PS_I2C_RTC_TEST:
-        zynq_ps_I2c_rtc_test();
+        zynq_ps_i2c_rtc_test();
         break;
     /* PL test */
     case PL_GPIO_LED_TEST:
